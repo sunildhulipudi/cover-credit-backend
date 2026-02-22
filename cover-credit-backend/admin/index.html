@@ -573,6 +573,10 @@ async function loadBookings(page = currentPage.bookings) {
     return;
   }
 
+  // Store data safely in window object to avoid inline JSON issues
+  window._bookingMap = {};
+  r.data.forEach(b => { window._bookingMap[b._id] = b; });
+
   tbody.innerHTML = r.data.map(b => `
     <tr>
       <td class="td-name">${esc(b.name)}</td>
@@ -585,7 +589,7 @@ async function loadBookings(page = currentPage.bookings) {
       <td>
         <div class="actions">
           <a href="tel:${b.phone}" class="act-btn act-call">📞 Call</a>
-          <button class="act-btn act-edit" onclick="openEdit('booking','${b._id}',${JSON.stringify(JSON.stringify(b))})">Edit</button>
+          <button class="act-btn act-edit" onclick="openEditById('booking','${b._id}')">Edit</button>
           <button class="act-btn act-delete" onclick="deleteLead('booking','${b._id}')">Delete</button>
         </div>
       </td>
@@ -611,6 +615,10 @@ async function loadContacts(page = currentPage.contacts) {
     return;
   }
 
+  // Store data safely in window object
+  window._contactMap = {};
+  r.data.forEach(c => { window._contactMap[c._id] = c; });
+
   tbody.innerHTML = r.data.map(c => `
     <tr>
       <td class="td-name">${esc(c.firstName)} ${esc(c.lastName)}</td>
@@ -622,7 +630,7 @@ async function loadContacts(page = currentPage.contacts) {
       <td>
         <div class="actions">
           <a href="tel:${c.phone}" class="act-btn act-call">📞 Call</a>
-          <button class="act-btn act-edit" onclick="openEdit('contact','${c._id}',${JSON.stringify(JSON.stringify(c))})">Edit</button>
+          <button class="act-btn act-edit" onclick="openEditById('contact','${c._id}')">Edit</button>
           <button class="act-btn act-delete" onclick="deleteLead('contact','${c._id}')">Delete</button>
         </div>
       </td>
@@ -646,6 +654,14 @@ function renderPagination(containerId, pagination, loadFn) {
 // ── Edit Modal ────────────────────────────────────────────
 const bookingStatuses = ['new','confirmed','completed','cancelled','no-show'];
 const contactStatuses = ['new','contacted','converted','closed'];
+
+function openEditById(type, id) {
+  const data = type === 'booking'
+    ? (window._bookingMap || {})[id]
+    : (window._contactMap || {})[id];
+  if (!data) { showToast('Could not load data. Please refresh.', 'error'); return; }
+  openEdit(type, id, JSON.stringify(data));
+}
 
 function openEdit(type, id, dataStr) {
   editType = type;
