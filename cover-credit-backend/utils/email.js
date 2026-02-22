@@ -4,12 +4,14 @@
 
 const nodemailer = require('nodemailer');
 
-// Create reusable transporter
+// Create reusable transporter using Brevo SMTP
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp-relay.brevo.com',
+  port: 587,
+  secure: false,
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_APP_PASSWORD,  // Gmail App Password (not your login password)
+    user: process.env.BREVO_SMTP_LOGIN,
+    pass: process.env.BREVO_SMTP_KEY,
   },
 });
 
@@ -109,13 +111,16 @@ function buildEmailHTML(type, data) {
 async function sendContactAlert(data) {
   if (!process.env.EMAIL_USER) return;
   try {
+    // EMAIL_TO supports multiple emails separated by comma
+    // e.g. EMAIL_TO=one@gmail.com,two@gmail.com,three@gmail.com
+    const recipients = process.env.EMAIL_TO;
     await transporter.sendMail({
       from:    `"Cover Credit Leads" <${process.env.EMAIL_USER}>`,
-      to:      process.env.EMAIL_TO,
+      to:      recipients,
       subject: `📩 New Lead: ${data.firstName} ${data.lastName} — ${data.interest}`,
       html:    buildEmailHTML('contact', data),
     });
-    console.log('📧  Contact alert email sent');
+    console.log('📧  Contact alert email sent to:', recipients);
   } catch (err) {
     console.error('Email send error:', err.message);
   }
@@ -125,13 +130,15 @@ async function sendContactAlert(data) {
 async function sendBookingAlert(data) {
   if (!process.env.EMAIL_USER) return;
   try {
+    // EMAIL_TO supports multiple emails separated by comma
+    const recipients = process.env.EMAIL_TO;
     await transporter.sendMail({
       from:    `"Cover Credit Leads" <${process.env.EMAIL_USER}>`,
-      to:      process.env.EMAIL_TO,
+      to:      recipients,
       subject: `📅 New Booking: ${data.name} — ${data.topic}`,
       html:    buildEmailHTML('booking', data),
     });
-    console.log('📧  Booking alert email sent');
+    console.log('📧  Booking alert email sent to:', recipients);
   } catch (err) {
     console.error('Email send error:', err.message);
   }
