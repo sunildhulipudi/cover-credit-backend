@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Admin Dashboard — Cover Credit</title>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
   <style>
     :root {
       --primary:#1a3c5e; --primary-dark:#0f2440;
@@ -12,39 +12,40 @@
       --bg:#f8f6f1;      --white:#fff;
       --text:#1c1c1c;    --muted:#6b6b6b;
       --border:#e5e0d8;
-      --green:#2da44e;   --red:#cf4343;   --orange:#e07b00;
-      --sidebar:240px;
+      --green:#2da44e;   --red:#cf4343;  --orange:#e07b00;
+      --blue:#0969da;
+      --sidebar:248px;
     }
     *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
     body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);}
     a{text-decoration:none;color:inherit;}
 
-    /* ── LOGIN SCREEN ── */
+    /* ── LOGIN ── */
     .login-screen{
       display:flex;align-items:center;justify-content:center;
       min-height:100vh;background:linear-gradient(135deg,var(--primary),var(--primary-dark));
     }
     .login-box{
       background:var(--white);border-radius:16px;padding:2.5rem;
-      width:100%;max-width:400px;box-shadow:0 24px 60px rgba(0,0,0,0.2);
+      width:100%;max-width:400px;box-shadow:0 24px 60px rgba(0,0,0,.2);
     }
     .login-logo{font-family:'Playfair Display',serif;font-size:1.8rem;
-      color:var(--primary);margin-bottom:0.3rem;}
+      color:var(--primary);margin-bottom:.3rem;}
     .login-logo span{color:var(--accent);}
-    .login-sub{font-size:0.84rem;color:var(--muted);margin-bottom:2rem;}
-    .login-box label{display:block;font-size:0.82rem;font-weight:600;
-      color:var(--primary);margin-bottom:0.4rem;}
-    .login-box input{width:100%;padding:0.75rem 1rem;border:1.5px solid var(--border);
-      border-radius:8px;font-family:inherit;font-size:0.92rem;
+    .login-sub{font-size:.84rem;color:var(--muted);margin-bottom:2rem;}
+    .login-box label{display:block;font-size:.82rem;font-weight:600;
+      color:var(--primary);margin-bottom:.4rem;}
+    .login-box input{width:100%;padding:.75rem 1rem;border:1.5px solid var(--border);
+      border-radius:8px;font-family:inherit;font-size:.92rem;
       margin-bottom:1rem;outline:none;transition:border-color .2s;}
     .login-box input:focus{border-color:var(--accent);}
-    .login-btn{width:100%;padding:0.85rem;background:var(--accent);color:var(--white);
+    .login-btn{width:100%;padding:.85rem;background:var(--accent);color:var(--white);
       border:none;border-radius:8px;font-family:inherit;font-size:1rem;
-      font-weight:600;cursor:pointer;transition:background .2s;}
+      font-weight:700;cursor:pointer;transition:background .2s;}
     .login-btn:hover{background:var(--accent-hover);}
     .login-error{display:none;background:#fdf0f0;border:1px solid #f5c6c6;
-      border-radius:6px;padding:0.7rem 1rem;color:var(--red);
-      font-size:0.85rem;margin-top:0.8rem;}
+      border-radius:6px;padding:.7rem 1rem;color:var(--red);
+      font-size:.85rem;margin-top:.8rem;}
 
     /* ── APP SHELL ── */
     .app{display:none;}
@@ -58,102 +59,127 @@
     }
     .sidebar-logo{
       padding:1.5rem 1.4rem;border-bottom:1px solid rgba(255,255,255,.1);
-      font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--white);
+      font-family:'Playfair Display',serif;font-size:1.3rem;
     }
     .sidebar-logo span{color:var(--accent);}
     .sidebar-nav{flex:1;padding:1rem 0;overflow-y:auto;}
+    .nav-section{padding:.4rem 1.4rem .2rem;font-size:.6rem;font-weight:700;
+      text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,.25);
+      margin-top:.6rem;}
     .nav-item{
-      display:flex;align-items:center;gap:0.7rem;padding:0.75rem 1.4rem;
-      font-size:0.88rem;font-weight:500;color:rgba(255,255,255,.65);
-      cursor:pointer;transition:background .2s,color .2s;border:none;
+      display:flex;align-items:center;gap:.7rem;padding:.72rem 1.4rem;
+      font-size:.87rem;font-weight:500;color:rgba(255,255,255,.6);
+      cursor:pointer;transition:background .18s,color .18s;border:none;
       background:none;width:100%;text-align:left;
     }
     .nav-item:hover,.nav-item.active{background:rgba(255,255,255,.08);color:var(--white);}
     .nav-item.active{border-left:3px solid var(--accent);}
-    .nav-icon{font-size:1rem;flex-shrink:0;}
+    .nav-icon{font-size:.95rem;flex-shrink:0;width:18px;text-align:center;}
+    .nav-badge{margin-left:auto;background:var(--accent);color:#fff;
+      font-size:.65rem;padding:.1rem .42rem;border-radius:100px;font-weight:700;}
     .sidebar-bottom{padding:1rem 1.4rem;border-top:1px solid rgba(255,255,255,.1);}
-    .logout-btn{
-      display:flex;align-items:center;gap:0.5rem;font-size:0.84rem;
-      color:rgba(255,255,255,.5);cursor:pointer;background:none;border:none;
-      font-family:inherit;padding:0;transition:color .2s;
-    }
-    .logout-btn:hover{color:var(--accent-light,#f5a07a);}
+    .logout-btn{display:flex;align-items:center;gap:.5rem;font-size:.84rem;
+      color:rgba(255,255,255,.45);cursor:pointer;background:none;border:none;
+      font-family:inherit;padding:0;transition:color .2s;}
+    .logout-btn:hover{color:#f5a07a;}
 
     /* ── MAIN ── */
-    .main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;}
+    .main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;min-width:0;}
     .topbar{
       background:var(--white);border-bottom:1px solid var(--border);
       padding:1rem 2rem;display:flex;align-items:center;
       justify-content:space-between;position:sticky;top:0;z-index:50;
     }
     .topbar-title{font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--primary);}
-    .topbar-time{font-size:0.8rem;color:var(--muted);}
-    .content{padding:2rem;}
+    .topbar-right{display:flex;align-items:center;gap:1rem;}
+    .topbar-time{font-size:.8rem;color:var(--muted);}
+    .content{padding:1.8rem 2rem;}
 
     /* ── STAT CARDS ── */
-    .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:1.2rem;margin-bottom:2rem;}
-    .stat-card{
-      background:var(--white);border:1px solid var(--border);border-radius:12px;
-      padding:1.4rem;position:relative;overflow:hidden;
-    }
-    .stat-card::before{
-      content:'';position:absolute;top:0;left:0;right:0;height:3px;
-      background:var(--accent);
-    }
+    .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+      gap:1.1rem;margin-bottom:2rem;}
+    .stat-card{background:var(--white);border:1px solid var(--border);
+      border-radius:12px;padding:1.3rem;position:relative;overflow:hidden;}
+    .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;
+      height:3px;background:var(--accent);}
     .stat-card.green::before{background:var(--green);}
     .stat-card.orange::before{background:var(--orange);}
-    .stat-label{font-size:0.75rem;font-weight:600;color:var(--muted);
-      text-transform:uppercase;letter-spacing:1px;margin-bottom:0.5rem;}
-    .stat-num{font-family:'Playfair Display',serif;font-size:2.2rem;
+    .stat-card.blue::before{background:var(--blue);}
+    .stat-label{font-size:.72rem;font-weight:700;color:var(--muted);
+      text-transform:uppercase;letter-spacing:1px;margin-bottom:.45rem;}
+    .stat-num{font-family:'Playfair Display',serif;font-size:2.1rem;
       font-weight:700;color:var(--primary);line-height:1;}
-    .stat-sub{font-size:0.75rem;color:var(--muted);margin-top:0.3rem;}
+    .stat-sub{font-size:.72rem;color:var(--muted);margin-top:.28rem;}
+
+    /* ── DEPT BREAKDOWN ── */
+    .dept-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));
+      gap:.7rem;margin-bottom:2rem;}
+    .dept-tile{background:var(--white);border:1px solid var(--border);
+      border-radius:10px;padding:.9rem 1rem;display:flex;align-items:center;
+      gap:.7rem;}
+    .dept-tile-ico{font-size:1.2rem;}
+    .dept-tile-body{min-width:0;}
+    .dept-tile-count{font-family:'Playfair Display',serif;font-size:1.4rem;
+      color:var(--primary);font-weight:700;line-height:1;}
+    .dept-tile-lbl{font-size:.65rem;color:var(--muted);margin-top:.1rem;
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
     /* ── PANELS ── */
     .panel{display:none;}
     .panel.active{display:block;}
     .panel-header{
       display:flex;align-items:center;justify-content:space-between;
-      margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;
+      margin-bottom:1.4rem;flex-wrap:wrap;gap:1rem;
     }
     .panel-title{font-family:'Playfair Display',serif;font-size:1.4rem;color:var(--primary);}
 
     /* ── CONTROLS ── */
-    .controls{display:flex;gap:0.8rem;flex-wrap:wrap;align-items:center;}
+    .controls{display:flex;gap:.7rem;flex-wrap:wrap;align-items:center;}
     .search-input{
-      padding:0.6rem 1rem;border:1.5px solid var(--border);border-radius:8px;
-      font-family:inherit;font-size:0.88rem;outline:none;min-width:220px;
+      padding:.58rem 1rem;border:1.5px solid var(--border);border-radius:8px;
+      font-family:inherit;font-size:.87rem;outline:none;min-width:210px;
       transition:border-color .2s;
     }
     .search-input:focus{border-color:var(--accent);}
     .filter-select{
-      padding:0.6rem 0.9rem;border:1.5px solid var(--border);border-radius:8px;
-      font-family:inherit;font-size:0.88rem;outline:none;background:var(--white);
-      cursor:pointer;
+      padding:.58rem .9rem;border:1.5px solid var(--border);border-radius:8px;
+      font-family:inherit;font-size:.87rem;outline:none;background:var(--white);cursor:pointer;
     }
 
     /* ── TABLE ── */
     .table-wrap{background:var(--white);border:1px solid var(--border);
-      border-radius:12px;overflow:hidden;}
-    table{width:100%;border-collapse:collapse;}
+      border-radius:12px;overflow:hidden;overflow-x:auto;}
+    table{width:100%;border-collapse:collapse;min-width:700px;}
     thead th{
-      background:var(--primary);color:var(--white);padding:0.9rem 1rem;
-      text-align:left;font-size:0.78rem;font-weight:600;letter-spacing:.5px;
+      background:var(--primary);color:var(--white);padding:.85rem 1rem;
+      text-align:left;font-size:.73rem;font-weight:700;letter-spacing:.5px;
       text-transform:uppercase;white-space:nowrap;
     }
     tbody tr{transition:background .15s;}
     tbody tr:hover{background:#faf8f5;}
-    tbody td{padding:0.85rem 1rem;font-size:0.86rem;border-bottom:1px solid var(--border);
+    tbody td{padding:.82rem 1rem;font-size:.85rem;border-bottom:1px solid var(--border);
       vertical-align:middle;}
     tbody tr:last-child td{border-bottom:none;}
-    .td-name{font-weight:600;color:var(--primary);}
+    .td-name{font-weight:700;color:var(--primary);}
     .td-phone a{color:var(--accent);font-weight:600;}
-    .td-date{color:var(--muted);font-size:0.78rem;white-space:nowrap;}
+    .td-date{color:var(--muted);font-size:.76rem;white-space:nowrap;}
+    .td-city{font-size:.8rem;color:var(--muted);}
+
+    /* Department badges */
+    .dept-badge{
+      display:inline-flex;align-items:center;gap:.3rem;padding:.2rem .6rem;
+      border-radius:6px;font-size:.72rem;font-weight:700;white-space:nowrap;
+    }
+    .dept-loan      {background:#fff8e8;color:#c77f00;}
+    .dept-health    {background:#fef0f0;color:#c0392b;}
+    .dept-life      {background:#fef0f8;color:#9b2c7a;}
+    .dept-bike      {background:#e8f4fd;color:#0969da;}
+    .dept-car       {background:#f0ffe8;color:#2a7a1e;}
+    .dept-commercial{background:#fff3e0;color:#e65100;}
 
     /* Status badges */
-    .badge{
-      display:inline-block;padding:0.2rem 0.6rem;border-radius:100px;
-      font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;
-    }
+    .badge{display:inline-block;padding:.2rem .58rem;border-radius:100px;
+      font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;}
     .badge-new      {background:#fff3e8;color:#e07b00;}
     .badge-contacted{background:#e8f4fd;color:#0969da;}
     .badge-converted{background:#edf8f1;color:var(--green);}
@@ -163,29 +189,33 @@
     .badge-cancelled{background:#fdf0f0;color:var(--red);}
     .badge-noshow   {background:#fff0f0;color:var(--red);}
 
+    /* Contact method icon */
+    .cm-chip{font-size:.75rem;color:var(--muted);}
+
     /* Action buttons */
-    .actions{display:flex;gap:0.4rem;flex-wrap:wrap;}
+    .actions{display:flex;gap:.35rem;flex-wrap:nowrap;}
     .act-btn{
-      padding:0.3rem 0.6rem;border-radius:5px;font-size:0.75rem;
+      padding:.28rem .58rem;border-radius:5px;font-size:.73rem;
       font-weight:600;cursor:pointer;border:none;font-family:inherit;
-      transition:opacity .2s;
+      transition:opacity .2s;white-space:nowrap;
     }
-    .act-btn:hover{opacity:.8;}
+    .act-btn:hover{opacity:.75;}
     .act-edit  {background:#e8f4fd;color:#0969da;}
     .act-delete{background:#fdf0f0;color:var(--red);}
     .act-call  {background:#edf8f1;color:var(--green);}
+    .act-wa    {background:#e8fdf0;color:#128c53;}
 
     /* ── PAGINATION ── */
-    .pagination{display:flex;align-items:center;gap:0.5rem;margin-top:1.2rem;
+    .pagination{display:flex;align-items:center;gap:.45rem;margin-top:1.1rem;
       justify-content:flex-end;flex-wrap:wrap;}
     .page-btn{
-      padding:0.4rem 0.8rem;border:1.5px solid var(--border);border-radius:6px;
-      background:var(--white);font-family:inherit;font-size:0.84rem;
+      padding:.38rem .75rem;border:1.5px solid var(--border);border-radius:6px;
+      background:var(--white);font-family:inherit;font-size:.83rem;
       cursor:pointer;transition:background .15s,border-color .15s;
     }
     .page-btn:hover,.page-btn.active{background:var(--accent);
       border-color:var(--accent);color:var(--white);}
-    .page-info{font-size:0.82rem;color:var(--muted);}
+    .page-info{font-size:.8rem;color:var(--muted);margin-right:.4rem;}
 
     /* ── MODAL ── */
     .modal-overlay{
@@ -195,41 +225,50 @@
     .modal-overlay.show{display:flex;}
     .modal{
       background:var(--white);border-radius:14px;padding:2rem;
-      width:100%;max-width:500px;max-height:90vh;overflow-y:auto;
+      width:100%;max-width:560px;max-height:90vh;overflow-y:auto;
       box-shadow:0 24px 60px rgba(0,0,0,.2);
     }
     .modal h3{font-family:'Playfair Display',serif;font-size:1.2rem;
       color:var(--primary);margin-bottom:1.2rem;}
-    .modal label{display:block;font-size:0.82rem;font-weight:600;
-      color:var(--primary);margin-bottom:0.3rem;margin-top:0.8rem;}
+    .modal-section{margin-bottom:1rem;}
+    .modal-section-title{font-size:.65rem;font-weight:700;text-transform:uppercase;
+      letter-spacing:1.5px;color:var(--muted);margin-bottom:.6rem;
+      padding-bottom:.4rem;border-bottom:1px solid var(--border);}
+    .modal-info{background:var(--bg);border-radius:8px;padding:1rem;margin-bottom:1rem;}
+    .modal-info p{font-size:.84rem;color:var(--text);margin-bottom:.35rem;line-height:1.55;}
+    .modal-info p:last-child{margin-bottom:0;}
+    .modal-info strong{color:var(--primary);}
+    .modal-details{background:#f0ede6;border-radius:8px;padding:1rem;margin-bottom:1rem;}
+    .modal-details p{font-size:.82rem;color:var(--text);margin-bottom:.3rem;line-height:1.5;}
+    .modal-details p:last-child{margin-bottom:0;}
+    .modal label{display:block;font-size:.82rem;font-weight:600;
+      color:var(--primary);margin-bottom:.3rem;margin-top:.9rem;}
     .modal select,.modal textarea{
-      width:100%;padding:0.65rem 0.9rem;border:1.5px solid var(--border);
-      border-radius:7px;font-family:inherit;font-size:0.9rem;outline:none;
+      width:100%;padding:.65rem .9rem;border:1.5px solid var(--border);
+      border-radius:7px;font-family:inherit;font-size:.9rem;outline:none;
       transition:border-color .2s;background:var(--white);
     }
     .modal select:focus,.modal textarea:focus{border-color:var(--accent);}
     .modal textarea{resize:vertical;min-height:100px;}
-    .modal-info{background:var(--bg);border-radius:8px;padding:1rem;margin-bottom:0.5rem;}
-    .modal-info p{font-size:0.85rem;color:var(--text);margin-bottom:0.3rem;line-height:1.55;}
-    .modal-info strong{color:var(--primary);}
-    .modal-actions{display:flex;gap:0.8rem;margin-top:1.5rem;justify-content:flex-end;}
+    .modal-actions{display:flex;gap:.8rem;margin-top:1.5rem;justify-content:flex-end;}
     .modal-save{background:var(--accent);color:var(--white);border:none;
-      padding:0.65rem 1.4rem;border-radius:7px;font-family:inherit;
-      font-size:0.9rem;font-weight:600;cursor:pointer;}
+      padding:.65rem 1.4rem;border-radius:7px;font-family:inherit;
+      font-size:.9rem;font-weight:700;cursor:pointer;transition:background .2s;}
+    .modal-save:hover{background:var(--accent-hover);}
     .modal-cancel{background:var(--bg);color:var(--text);border:1px solid var(--border);
-      padding:0.65rem 1.4rem;border-radius:7px;font-family:inherit;
-      font-size:0.9rem;font-weight:600;cursor:pointer;}
+      padding:.65rem 1.4rem;border-radius:7px;font-family:inherit;
+      font-size:.9rem;font-weight:600;cursor:pointer;}
 
-    /* ── EMPTY STATE ── */
+    /* ── EMPTY ── */
     .empty{text-align:center;padding:3rem;color:var(--muted);}
-    .empty-icon{font-size:3rem;margin-bottom:0.8rem;}
-    .empty p{font-size:0.9rem;}
+    .empty-icon{font-size:3rem;margin-bottom:.8rem;}
+    .empty p{font-size:.9rem;}
 
     /* ── TOAST ── */
     .toast{
       position:fixed;bottom:1.5rem;right:1.5rem;z-index:999;
       background:var(--primary-dark);color:var(--white);
-      padding:0.8rem 1.4rem;border-radius:8px;font-size:0.88rem;
+      padding:.8rem 1.4rem;border-radius:8px;font-size:.88rem;
       font-weight:500;box-shadow:0 8px 24px rgba(0,0,0,.2);
       transform:translateY(100px);opacity:0;transition:.3s ease;
     }
@@ -237,8 +276,7 @@
     .toast.success{background:#1a6e35;}
     .toast.error  {background:var(--red);}
 
-    /* Loading */
-    .loading{text-align:center;padding:2rem;color:var(--muted);font-size:0.9rem;}
+    .loading{text-align:center;padding:2rem;color:var(--muted);font-size:.9rem;}
 
     @media(max-width:768px){
       .sidebar{transform:translateX(-100%);}
@@ -249,7 +287,7 @@
 </head>
 <body>
 
-<!-- ═══ LOGIN SCREEN ═══ -->
+<!-- ═══ LOGIN ═══ -->
 <div class="login-screen" id="login-screen">
   <div class="login-box">
     <div class="login-logo">Cover<span>Credit</span></div>
@@ -266,24 +304,20 @@
 <!-- ═══ APP ═══ -->
 <div class="app" id="app">
 
-  <!-- Sidebar -->
   <aside class="sidebar">
     <div class="sidebar-logo">Cover<span>Credit</span></div>
     <nav class="sidebar-nav">
       <button class="nav-item active" onclick="showPanel('dashboard')">
         <span class="nav-icon">📊</span> Dashboard
       </button>
+      <div class="nav-section">Leads</div>
       <button class="nav-item" onclick="showPanel('bookings')">
         <span class="nav-icon">📅</span> Bookings
-        <span id="nav-booking-badge" style="margin-left:auto;background:var(--accent);
-          color:#fff;font-size:0.68rem;padding:0.1rem 0.45rem;border-radius:100px;
-          font-weight:700;"></span>
+        <span class="nav-badge" id="nav-booking-badge"></span>
       </button>
       <button class="nav-item" onclick="showPanel('contacts')">
         <span class="nav-icon">📩</span> Contacts
-        <span id="nav-contact-badge" style="margin-left:auto;background:var(--accent);
-          color:#fff;font-size:0.68rem;padding:0.1rem 0.45rem;border-radius:100px;
-          font-weight:700;"></span>
+        <span class="nav-badge" id="nav-contact-badge"></span>
       </button>
     </nav>
     <div class="sidebar-bottom">
@@ -291,41 +325,60 @@
     </div>
   </aside>
 
-  <!-- Main -->
   <main class="main">
     <div class="topbar">
       <span class="topbar-title" id="panel-heading">Dashboard</span>
-      <span class="topbar-time" id="clock"></span>
+      <div class="topbar-right">
+        <span class="topbar-time" id="clock"></span>
+      </div>
     </div>
 
     <div class="content">
 
-      <!-- ── DASHBOARD PANEL ── -->
+      <!-- ── DASHBOARD ── -->
       <div class="panel active" id="panel-dashboard">
         <div class="stats-row" id="stats-row">
           <div class="loading">Loading stats…</div>
         </div>
+
+        <!-- Department breakdown tiles -->
+        <p style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;
+           letter-spacing:1.2px;margin-bottom:.8rem;">Bookings by Department</p>
+        <div class="dept-grid" id="dept-grid">
+          <div class="loading">Loading…</div>
+        </div>
+
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
           <div>
-            <h3 style="font-family:'Playfair Display',serif;font-size:1.1rem;
-              color:var(--primary);margin-bottom:1rem;">Recent Bookings</h3>
+            <p style="font-family:'Playfair Display',serif;font-size:1.05rem;
+               color:var(--primary);margin-bottom:.9rem;">Recent Bookings</p>
             <div class="table-wrap" id="recent-bookings"><div class="loading">Loading…</div></div>
           </div>
           <div>
-            <h3 style="font-family:'Playfair Display',serif;font-size:1.1rem;
-              color:var(--primary);margin-bottom:1rem;">Recent Contacts</h3>
+            <p style="font-family:'Playfair Display',serif;font-size:1.05rem;
+               color:var(--primary);margin-bottom:.9rem;">Recent Contacts</p>
             <div class="table-wrap" id="recent-contacts"><div class="loading">Loading…</div></div>
           </div>
         </div>
       </div>
 
-      <!-- ── BOOKINGS PANEL ── -->
+      <!-- ── BOOKINGS ── -->
       <div class="panel" id="panel-bookings">
         <div class="panel-header">
           <span class="panel-title">Consultation Bookings</span>
           <div class="controls">
             <input class="search-input" id="booking-search"
-              placeholder="Search name, phone…" oninput="debounce(loadBookings,400)()"/>
+              placeholder="Search name, phone, city…"
+              oninput="debounce(loadBookings,400)()"/>
+            <select class="filter-select" id="booking-dept" onchange="loadBookings()">
+              <option value="all">All Departments</option>
+              <option value="loan">🏠 Loans</option>
+              <option value="health">🏥 Health Insurance</option>
+              <option value="life">❤️ Life Insurance</option>
+              <option value="bike">🏍️ Bike Insurance</option>
+              <option value="car">🚗 Car Insurance</option>
+              <option value="commercial">🚛 Commercial Vehicle</option>
+            </select>
             <select class="filter-select" id="booking-status" onchange="loadBookings()">
               <option value="all">All Status</option>
               <option value="new">New</option>
@@ -340,24 +393,33 @@
           <table>
             <thead>
               <tr>
-                <th>Name</th><th>Phone</th><th>Topic</th>
-                <th>Time Slot</th><th>Language</th>
-                <th>Status</th><th>Date</th><th>Actions</th>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Department</th>
+                <th>City</th>
+                <th>Contact Via</th>
+                <th>Best Time</th>
+                <th>Status</th>
+                <th>Date</th>
+                <th>Actions</th>
               </tr>
             </thead>
-            <tbody id="bookings-body"><tr><td colspan="8"><div class="loading">Loading…</div></td></tr></tbody>
+            <tbody id="bookings-body">
+              <tr><td colspan="9"><div class="loading">Loading…</div></td></tr>
+            </tbody>
           </table>
         </div>
         <div class="pagination" id="bookings-pagination"></div>
       </div>
 
-      <!-- ── CONTACTS PANEL ── -->
+      <!-- ── CONTACTS ── -->
       <div class="panel" id="panel-contacts">
         <div class="panel-header">
           <span class="panel-title">Contact Form Submissions</span>
           <div class="controls">
             <input class="search-input" id="contact-search"
-              placeholder="Search name, phone…" oninput="debounce(loadContacts,400)()"/>
+              placeholder="Search name, phone…"
+              oninput="debounce(loadContacts,400)()"/>
             <select class="filter-select" id="contact-status" onchange="loadContacts()">
               <option value="all">All Status</option>
               <option value="new">New</option>
@@ -375,7 +437,9 @@
                 <th>Interest</th><th>Status</th><th>Date</th><th>Actions</th>
               </tr>
             </thead>
-            <tbody id="contacts-body"><tr><td colspan="7"><div class="loading">Loading…</div></td></tr></tbody>
+            <tbody id="contacts-body">
+              <tr><td colspan="7"><div class="loading">Loading…</div></td></tr>
+            </tbody>
           </table>
         </div>
         <div class="pagination" id="contacts-pagination"></div>
@@ -383,18 +447,43 @@
 
     </div><!-- /content -->
   </main>
-
-</div><!-- /app -->
+</div>
 
 <!-- ═══ EDIT MODAL ═══ -->
 <div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
   <div class="modal" id="modal">
     <h3 id="modal-title">Edit Lead</h3>
-    <div id="modal-info"></div>
+
+    <!-- Contact info section -->
+    <div class="modal-section">
+      <div class="modal-section-title">Contact Details</div>
+      <div class="modal-info" id="modal-contact-info"></div>
+    </div>
+
+    <!-- Dept-specific details section (bookings only) -->
+    <div class="modal-section" id="modal-details-section" style="display:none;">
+      <div class="modal-section-title" id="modal-details-title">Details</div>
+      <div class="modal-details" id="modal-details-body"></div>
+    </div>
+
+    <!-- Schedule section (bookings only) -->
+    <div class="modal-section" id="modal-schedule-section" style="display:none;">
+      <div class="modal-section-title">Contact Preference</div>
+      <div class="modal-info" id="modal-schedule-info"></div>
+    </div>
+
     <label>Status</label>
     <select id="modal-status"></select>
+
+    <label>Scheduled At (optional)</label>
+    <input type="datetime-local" id="modal-scheduled"
+      style="width:100%;padding:.65rem .9rem;border:1.5px solid var(--border);
+             border-radius:7px;font-family:inherit;font-size:.9rem;outline:none;
+             background:var(--white);margin-bottom:.5rem;"/>
+
     <label>Admin Notes</label>
-    <textarea id="modal-notes" placeholder="Add your notes here…"></textarea>
+    <textarea id="modal-notes" placeholder="Add internal notes here…"></textarea>
+
     <div class="modal-actions">
       <button class="modal-cancel" onclick="closeModal()">Cancel</button>
       <button class="modal-save" onclick="saveEdit()">Save Changes</button>
@@ -402,15 +491,37 @@
   </div>
 </div>
 
-<!-- Toast -->
 <div class="toast" id="toast"></div>
 
 <script>
-// ── Config ────────────────────────────────────────────────
-// Change this to your deployed backend URL after deploying
+// ── Config ───────────────────────────────────────────────
 const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
   ? 'http://localhost:5000/api'
-  : '/api';   // same origin when served by Express
+  : '/api';
+
+// ── Department config ────────────────────────────────────
+const DEPT = {
+  loan:       { label:'Loans & Finance',            icon:'🏠', cls:'dept-loan'       },
+  health:     { label:'Health Insurance',            icon:'🏥', cls:'dept-health'     },
+  life:       { label:'Life Insurance',              icon:'❤️', cls:'dept-life'       },
+  bike:       { label:'Bike Insurance',              icon:'🏍️', cls:'dept-bike'       },
+  car:        { label:'Car Insurance',               icon:'🚗', cls:'dept-car'        },
+  commercial: { label:'Commercial Vehicle Insurance',icon:'🚛', cls:'dept-commercial' },
+};
+
+// Human-readable labels for dept details fields
+const DETAIL_LABELS = {
+  loanType:'Loan Type', loanAmount:'Loan Amount', employmentType:'Employment Type',
+  monthlyIncome:'Monthly Income', existingLoans:'Existing Loans',
+  coverage:'Coverage For', sumInsured:'Sum Insured', existingPolicy:'Existing Policy',
+  preExisting:'Pre-existing Conditions',
+  ageGroup:'Age Group', smoker:'Smoker', planType:'Plan Type',
+  coverageAmount:'Coverage Amount', dependants:'Dependants',
+  regNumber:'Registration No.', makeModel:'Make & Model', year:'Year',
+  currentInsurer:'Current Insurer', coverageType:'Coverage Type', addOns:'Add-ons',
+  vehicleType:'Vehicle Type', numberOfVehicles:'No. of Vehicles',
+  goodsCarrierType:'Goods Carrier Type',
+};
 
 // ── State ─────────────────────────────────────────────────
 let token       = localStorage.getItem('cc_token') || '';
@@ -418,7 +529,7 @@ let editType    = '';
 let editId      = '';
 let currentPage = { bookings: 1, contacts: 1 };
 
-// ── On load ───────────────────────────────────────────────
+// ── Init ─────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
   updateClock();
   setInterval(updateClock, 30000);
@@ -427,12 +538,13 @@ window.addEventListener('DOMContentLoaded', () => {
 
 function updateClock() {
   document.getElementById('clock').textContent =
-    new Date().toLocaleString('en-IN', { timeZone:'Asia/Kolkata',
-      weekday:'short', day:'numeric', month:'short',
-      hour:'2-digit', minute:'2-digit' });
+    new Date().toLocaleString('en-IN', {
+      timeZone:'Asia/Kolkata', weekday:'short',
+      day:'numeric', month:'short', hour:'2-digit', minute:'2-digit',
+    });
 }
 
-// ── Auth ──────────────────────────────────────────────────
+// ── Auth ─────────────────────────────────────────────────
 async function verifyToken() {
   try {
     const r = await apiFetch('/auth/verify');
@@ -446,7 +558,6 @@ async function doLogin() {
   const pass  = document.getElementById('l-pass').value;
   const errEl = document.getElementById('login-error');
   errEl.style.display = 'none';
-
   try {
     const r = await apiFetch('/auth/login', 'POST', { email, password: pass });
     if (r.success) {
@@ -483,7 +594,11 @@ function showApp() {
 }
 
 // ── Navigation ────────────────────────────────────────────
-const panelTitles = { dashboard:'Dashboard', bookings:'Consultation Bookings', contacts:'Contact Submissions' };
+const panelTitles = {
+  dashboard: 'Dashboard',
+  bookings:  'Consultation Bookings',
+  contacts:  'Contact Submissions',
+};
 
 function showPanel(name) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
@@ -493,12 +608,11 @@ function showPanel(name) {
     if (n.textContent.toLowerCase().includes(name)) n.classList.add('active');
   });
   document.getElementById('panel-heading').textContent = panelTitles[name] || name;
-
   if (name === 'bookings') loadBookings();
   if (name === 'contacts') loadContacts();
 }
 
-// ── API helper ───────────────────────────────────────────
+// ── API helper ────────────────────────────────────────────
 async function apiFetch(path, method='GET', body=null) {
   const opts = {
     method,
@@ -518,87 +632,129 @@ async function apiFetch(path, method='GET', body=null) {
 async function loadDashboard() {
   const r = await apiFetch('/admin/stats');
   if (!r.success) return;
-
   const s = r.stats;
-  document.getElementById('stats-row').innerHTML = `
-    <div class="stat-card"><div class="stat-label">Total Leads</div>
-      <div class="stat-num">${s.totalLeads}</div><div class="stat-sub">All time</div></div>
-    <div class="stat-card orange"><div class="stat-label">New Leads</div>
-      <div class="stat-num">${s.newLeads}</div><div class="stat-sub">Awaiting contact</div></div>
-    <div class="stat-card"><div class="stat-label">Bookings</div>
-      <div class="stat-num">${s.totalBookings}</div><div class="stat-sub">${s.newBookings} new</div></div>
-    <div class="stat-card green"><div class="stat-label">Contacts</div>
-      <div class="stat-num">${s.totalContacts}</div><div class="stat-sub">${s.newContacts} new</div></div>
-  `;
 
-  // Update nav badges
+  document.getElementById('stats-row').innerHTML = `
+    <div class="stat-card">
+      <div class="stat-label">Total Leads</div>
+      <div class="stat-num">${s.totalLeads}</div>
+      <div class="stat-sub">All time</div>
+    </div>
+    <div class="stat-card orange">
+      <div class="stat-label">New Leads</div>
+      <div class="stat-num">${s.newLeads}</div>
+      <div class="stat-sub">Awaiting contact</div>
+    </div>
+    <div class="stat-card blue">
+      <div class="stat-label">Bookings</div>
+      <div class="stat-num">${s.totalBookings}</div>
+      <div class="stat-sub">${s.newBookings} new</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-label">Contacts</div>
+      <div class="stat-num">${s.totalContacts}</div>
+      <div class="stat-sub">${s.newContacts} new</div>
+    </div>`;
+
+  // Nav badges
   const bb = document.getElementById('nav-booking-badge');
   const cb = document.getElementById('nav-contact-badge');
   bb.textContent = s.newBookings > 0 ? s.newBookings : '';
   cb.textContent = s.newContacts > 0 ? s.newContacts : '';
 
-  // Recent tables
-  document.getElementById('recent-bookings').innerHTML = miniTable(r.recentBookings, 'booking');
-  document.getElementById('recent-contacts').innerHTML = miniTable(r.recentContacts, 'contact');
+  // Department breakdown tiles
+  const deptData = {};
+  (r.bookingsByDepartment || []).forEach(d => { deptData[d._id] = d.count; });
+  const allDepts = Object.entries(DEPT);
+  document.getElementById('dept-grid').innerHTML = allDepts.map(([key, d]) => `
+    <div class="dept-tile">
+      <span class="dept-tile-ico">${d.icon}</span>
+      <div class="dept-tile-body">
+        <div class="dept-tile-count">${deptData[key] || 0}</div>
+        <div class="dept-tile-lbl">${d.label}</div>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('recent-bookings').innerHTML = miniBookingTable(r.recentBookings);
+  document.getElementById('recent-contacts').innerHTML = miniContactTable(r.recentContacts);
 }
 
-function miniTable(rows, type) {
-  if (!rows?.length) return '<div class="empty"><div class="empty-icon">📭</div><p>No data yet</p></div>';
-  const isBooking = type === 'booking';
-  const items = rows.map(r => `
-    <tr>
-      <td class="td-name">${isBooking ? r.name : r.firstName + ' ' + r.lastName}</td>
-      <td class="td-phone"><a href="tel:${r.phone}">${r.phone}</a></td>
-      <td><span class="badge badge-${(r.status||'new').replace('-','')}">${r.status||'new'}</span></td>
-      <td class="td-date">${fmtDate(r.createdAt)}</td>
-    </tr>`).join('');
+function miniBookingTable(rows) {
+  if (!rows?.length) return '<div class="empty"><div class="empty-icon">📭</div><p>No bookings yet</p></div>';
+  const items = rows.map(b => {
+    const d = DEPT[b.department] || { icon:'📋', label: b.department };
+    return `<tr>
+      <td class="td-name">${esc(b.name)}</td>
+      <td><span class="dept-badge ${(DEPT[b.department]||{cls:''}).cls}">${d.icon} ${d.label}</span></td>
+      <td><span class="badge badge-${(b.status||'new').replace('-','')}">${b.status||'new'}</span></td>
+      <td class="td-date">${fmtDate(b.createdAt)}</td>
+    </tr>`;
+  }).join('');
+  return `<table><thead><tr><th>Name</th><th>Department</th><th>Status</th><th>Date</th></tr></thead>
+    <tbody>${items}</tbody></table>`;
+}
+
+function miniContactTable(rows) {
+  if (!rows?.length) return '<div class="empty"><div class="empty-icon">📭</div><p>No contacts yet</p></div>';
+  const items = rows.map(c => `<tr>
+    <td class="td-name">${esc(c.firstName)} ${esc(c.lastName)}</td>
+    <td><a href="tel:${c.phone}" class="td-phone" style="color:var(--accent);font-weight:600;">${c.phone}</a></td>
+    <td><span class="badge badge-${c.status||'new'}">${c.status||'new'}</span></td>
+    <td class="td-date">${fmtDate(c.createdAt)}</td>
+  </tr>`).join('');
   return `<table><thead><tr><th>Name</th><th>Phone</th><th>Status</th><th>Date</th></tr></thead>
     <tbody>${items}</tbody></table>`;
 }
 
-// ── Bookings ──────────────────────────────────────────────
+// ── Bookings table ────────────────────────────────────────
 async function loadBookings(page = currentPage.bookings) {
   currentPage.bookings = page;
   const search = document.getElementById('booking-search')?.value || '';
   const status = document.getElementById('booking-status')?.value || 'all';
-  const params = new URLSearchParams({ page, limit: 15, status, search });
+  const dept   = document.getElementById('booking-dept')?.value   || 'all';
+  const params = new URLSearchParams({ page, limit: 15, status, search, department: dept });
   const r = await apiFetch('/admin/bookings?' + params);
   if (!r.success) return;
 
   const tbody = document.getElementById('bookings-body');
   if (!r.data.length) {
-    tbody.innerHTML = `<tr><td colspan="8"><div class="empty">
+    tbody.innerHTML = `<tr><td colspan="9"><div class="empty">
       <div class="empty-icon">📭</div><p>No bookings found</p></div></td></tr>`;
     document.getElementById('bookings-pagination').innerHTML = '';
     return;
   }
 
-  // Store data safely in window object to avoid inline JSON issues
   window._bookingMap = {};
   r.data.forEach(b => { window._bookingMap[b._id] = b; });
 
-  tbody.innerHTML = r.data.map(b => `
-    <tr>
+  tbody.innerHTML = r.data.map(b => {
+    const d  = DEPT[b.department] || { icon:'📋', label: b.department, cls:'' };
+    const cm = { 'Phone Call':'📞', 'WhatsApp':'💬', 'Email':'📧' }[b.contactMethod] || '📞';
+    const slot = (b.timeSlot || '').replace(' (9 AM – 12 PM)','').replace(' (12 PM – 4 PM)','').replace(' (4 PM – 7 PM)','');
+    return `<tr>
       <td class="td-name">${esc(b.name)}</td>
       <td class="td-phone"><a href="tel:${b.phone}">${b.phone}</a></td>
-      <td style="max-width:200px;font-size:0.82rem;">${esc(b.topic)}</td>
-      <td style="font-size:0.82rem;">${esc(b.preferredTimeSlot)}</td>
-      <td style="font-size:0.82rem;">${esc(b.preferredLanguage)}</td>
-      <td><span class="badge badge-${b.status.replace('-','')}">${b.status}</span></td>
+      <td><span class="dept-badge ${d.cls}">${d.icon} ${d.label}</span></td>
+      <td class="td-city">${esc(b.city || '—')}</td>
+      <td class="cm-chip">${cm} ${esc(b.contactMethod || 'Phone Call')}</td>
+      <td style="font-size:.8rem;color:var(--muted);">${esc(slot || b.timeSlot || '—')}</td>
+      <td><span class="badge badge-${(b.status||'new').replace('-','')}">${b.status||'new'}</span></td>
       <td class="td-date">${fmtDate(b.createdAt)}</td>
       <td>
         <div class="actions">
-          <a href="tel:${b.phone}" class="act-btn act-call">📞 Call</a>
+          <a href="tel:${b.phone}" class="act-btn act-call">📞</a>
+          <a href="https://wa.me/${b.phone.replace(/\D/g,'')}" target="_blank" class="act-btn act-wa">💬</a>
           <button class="act-btn act-edit" onclick="openEditById('booking','${b._id}')">Edit</button>
-          <button class="act-btn act-delete" onclick="deleteLead('booking','${b._id}')">Delete</button>
+          <button class="act-btn act-delete" onclick="deleteLead('booking','${b._id}')">Del</button>
         </div>
       </td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
 
   renderPagination('bookings-pagination', r.pagination, loadBookings);
 }
 
-// ── Contacts ──────────────────────────────────────────────
+// ── Contacts table ────────────────────────────────────────
 async function loadContacts(page = currentPage.contacts) {
   currentPage.contacts = page;
   const search = document.getElementById('contact-search')?.value || '';
@@ -615,7 +771,6 @@ async function loadContacts(page = currentPage.contacts) {
     return;
   }
 
-  // Store data safely in window object
   window._contactMap = {};
   r.data.forEach(c => { window._contactMap[c._id] = c; });
 
@@ -623,15 +778,15 @@ async function loadContacts(page = currentPage.contacts) {
     <tr>
       <td class="td-name">${esc(c.firstName)} ${esc(c.lastName)}</td>
       <td class="td-phone"><a href="tel:${c.phone}">${c.phone}</a></td>
-      <td style="font-size:0.82rem;">${c.email ? `<a href="mailto:${c.email}">${esc(c.email)}</a>` : '—'}</td>
-      <td style="font-size:0.82rem;">${esc(c.interest)}</td>
-      <td><span class="badge badge-${c.status}">${c.status}</span></td>
+      <td style="font-size:.82rem;">${c.email ? `<a href="mailto:${c.email}">${esc(c.email)}</a>` : '—'}</td>
+      <td style="font-size:.82rem;">${esc(c.interest || '—')}</td>
+      <td><span class="badge badge-${c.status||'new'}">${c.status||'new'}</span></td>
       <td class="td-date">${fmtDate(c.createdAt)}</td>
       <td>
         <div class="actions">
-          <a href="tel:${c.phone}" class="act-btn act-call">📞 Call</a>
+          <a href="tel:${c.phone}" class="act-btn act-call">📞</a>
           <button class="act-btn act-edit" onclick="openEditById('contact','${c._id}')">Edit</button>
-          <button class="act-btn act-delete" onclick="deleteLead('contact','${c._id}')">Delete</button>
+          <button class="act-btn act-delete" onclick="deleteLead('contact','${c._id}')">Del</button>
         </div>
       </td>
     </tr>`).join('');
@@ -642,7 +797,7 @@ async function loadContacts(page = currentPage.contacts) {
 // ── Pagination ────────────────────────────────────────────
 function renderPagination(containerId, pagination, loadFn) {
   const el = document.getElementById(containerId);
-  if (!el || pagination.pages <= 1) { if(el) el.innerHTML=''; return; }
+  if (!el || pagination.pages <= 1) { if (el) el.innerHTML = ''; return; }
   let html = `<span class="page-info">Page ${pagination.page} of ${pagination.pages} (${pagination.total} total)</span>`;
   for (let i = 1; i <= pagination.pages; i++) {
     html += `<button class="page-btn${i===pagination.page?' active':''}"
@@ -655,36 +810,79 @@ function renderPagination(containerId, pagination, loadFn) {
 const bookingStatuses = ['new','confirmed','completed','cancelled','no-show'];
 const contactStatuses = ['new','contacted','converted','closed'];
 
-function openEditById(type, id) {
-  const data = type === 'booking'
+async function openEditById(type, id) {
+  showToast('Loading…');
+  // Try to get fresh data; fall back to cache
+  try {
+    const path = type === 'booking'
+      ? `/admin/bookings?page=1&limit=200&status=all`
+      : `/admin/contacts?page=1&limit=200&status=all`;
+    const r = await apiFetch(path);
+    if (r.success) {
+      const record = r.data.find(x => x._id === id);
+      if (record) { openEdit(type, record); return; }
+    }
+  } catch(e) {}
+  const cached = type === 'booking'
     ? (window._bookingMap || {})[id]
     : (window._contactMap || {})[id];
-  if (!data) { showToast('Could not load data. Please refresh.', 'error'); return; }
-  openEdit(type, id, JSON.stringify(data));
+  if (!cached) { showToast('Could not load. Please refresh.', 'error'); return; }
+  openEdit(type, cached);
 }
 
-function openEdit(type, id, dataStr) {
+function openEdit(type, data) {
   editType = type;
-  editId   = id;
-  const data = JSON.parse(dataStr);
+  editId   = data._id;
+  const isBooking = type === 'booking';
 
   document.getElementById('modal-title').textContent =
-    type === 'booking' ? '📅 Edit Booking' : '📩 Edit Contact';
+    isBooking ? '📅 Edit Booking' : '📩 Edit Contact';
 
-  // Info display
-  const isB = type === 'booking';
-  document.getElementById('modal-info').innerHTML = `
-    <div class="modal-info">
-      <p><strong>Name:</strong> ${isB ? data.name : data.firstName+' '+data.lastName}</p>
-      <p><strong>Phone:</strong> <a href="tel:${data.phone}" style="color:var(--accent);">${data.phone}</a></p>
-      ${data.email ? `<p><strong>Email:</strong> ${data.email}</p>` : ''}
-      <p><strong>${isB?'Topic':'Interest'}:</strong> ${isB ? data.topic : data.interest}</p>
-      ${isB ? `<p><strong>Slot:</strong> ${data.preferredTimeSlot} · ${data.preferredLanguage}</p>` : ''}
-      ${data.message||data.notes ? `<p><strong>Message:</strong> ${data.message||data.notes}</p>` : ''}
-    </div>`;
+  // ── Contact info ──
+  const name = isBooking ? data.name : `${data.firstName} ${data.lastName}`;
+  document.getElementById('modal-contact-info').innerHTML = `
+    <p><strong>Name:</strong> ${esc(name)}</p>
+    <p><strong>Phone:</strong> <a href="tel:${data.phone}" style="color:var(--accent);font-weight:700;">${data.phone}</a></p>
+    ${data.email ? `<p><strong>Email:</strong> <a href="mailto:${data.email}" style="color:var(--accent);">${esc(data.email)}</a></p>` : ''}
+    ${isBooking ? `<p><strong>City:</strong> ${esc(data.city || '—')}</p>` : ''}
+    ${!isBooking && data.interest ? `<p><strong>Interest:</strong> ${esc(data.interest)}</p>` : ''}
+    ${!isBooking && data.message  ? `<p><strong>Message:</strong> ${esc(data.message)}</p>`  : ''}
+  `;
 
-  // Status select
-  const statuses = type === 'booking' ? bookingStatuses : contactStatuses;
+  if (isBooking) {
+    // ── Dept details ──
+    const dept = DEPT[data.department] || { label: data.department, icon: '📋' };
+    document.getElementById('modal-details-section').style.display = 'block';
+    document.getElementById('modal-details-title').textContent = `${dept.icon} ${dept.label} — Specifics`;
+
+    const details = data.details || {};
+    const detailRows = Object.entries(details)
+      .filter(([, v]) => v && v !== '')
+      .map(([k, v]) => `<p><strong>${DETAIL_LABELS[k] || k}:</strong> ${esc(String(v))}</p>`)
+      .join('');
+    document.getElementById('modal-details-body').innerHTML =
+      detailRows || '<p style="color:var(--muted);font-size:.82rem;">No specific details captured.</p>';
+
+    // ── Schedule ──
+    document.getElementById('modal-schedule-section').style.display = 'block';
+    document.getElementById('modal-schedule-info').innerHTML = `
+      <p><strong>Contact Via:</strong> ${esc(data.contactMethod || 'Phone Call')}</p>
+      <p><strong>Best Time:</strong> ${esc(data.timeSlot || '—')}</p>
+      ${data.notes ? `<p><strong>Notes:</strong> ${esc(data.notes)}</p>` : ''}
+    `;
+
+    // Scheduled at field
+    document.getElementById('modal-scheduled').value =
+      data.scheduledAt ? new Date(data.scheduledAt).toISOString().slice(0,16) : '';
+    document.getElementById('modal-scheduled').closest('label')?.nextElementSibling;
+  } else {
+    document.getElementById('modal-details-section').style.display = 'none';
+    document.getElementById('modal-schedule-section').style.display = 'none';
+    document.getElementById('modal-scheduled').value = '';
+  }
+
+  // Status options
+  const statuses = isBooking ? bookingStatuses : contactStatuses;
   document.getElementById('modal-status').innerHTML =
     statuses.map(s => `<option value="${s}"${s===data.status?' selected':''}>${s}</option>`).join('');
 
@@ -699,11 +897,17 @@ function closeModal(e) {
 }
 
 async function saveEdit() {
-  const status     = document.getElementById('modal-status').value;
-  const adminNotes = document.getElementById('modal-notes').value;
-  const path = editType === 'booking' ? `/admin/bookings/${editId}` : `/admin/contacts/${editId}`;
+  const status      = document.getElementById('modal-status').value;
+  const adminNotes  = document.getElementById('modal-notes').value;
+  const scheduledAt = document.getElementById('modal-scheduled').value || null;
+  const path = editType === 'booking'
+    ? `/admin/bookings/${editId}`
+    : `/admin/contacts/${editId}`;
 
-  const r = await apiFetch(path, 'PATCH', { status, adminNotes });
+  const payload = { status, adminNotes };
+  if (editType === 'booking' && scheduledAt) payload.scheduledAt = scheduledAt;
+
+  const r = await apiFetch(path, 'PATCH', payload);
   if (r.success) {
     closeModal();
     showToast('Updated successfully ✓', 'success');
