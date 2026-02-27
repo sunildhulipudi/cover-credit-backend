@@ -20,9 +20,11 @@ app.use(helmet({
 
 app.use(cors({
   origin: [
-    process.env.FRONTEND_URL || 'http://localhost:3000',
-    'http://127.0.0.1:5500',      // VS Code Live Server (local dev)
+    process.env.FRONTEND_URL || 'https://gleaming-rabanadas-c36160.netlify.app',
+    'https://gleaming-rabanadas-c36160.netlify.app',  // Netlify frontend
+    'http://127.0.0.1:5500',                           // VS Code Live Server
     'http://localhost:5500',
+    'http://localhost:3000',
   ],
   credentials: true,
 }));
