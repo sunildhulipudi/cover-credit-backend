@@ -1,12 +1,21 @@
 // ============================================================
 // MODEL: Booking
-// Stores data from the Book Consultation page form
+// Stores data from the Book Consultation page (wizard form)
+// Updated to match new 4-step department-based form
 // ============================================================
 
 const mongoose = require('mongoose');
 
 const bookingSchema = new mongoose.Schema(
   {
+    // ── Step 1: Department ─────────────────────────────────
+    department: {
+      type: String,
+      required: [true, 'Department is required'],
+      enum: ['loan', 'health', 'life', 'bike', 'car', 'commercial'],
+    },
+
+    // ── Step 2: Common contact details ────────────────────
     name: {
       type: String,
       required: [true, 'Name is required'],
@@ -26,34 +35,39 @@ const bookingSchema = new mongoose.Schema(
       match: [/^\S+@\S+\.\S+$/, 'Invalid email'],
       default: '',
     },
-    topic: {
+    city: {
       type: String,
-      required: [true, 'Topic is required'],
-      enum: [
-        'Health Insurance — New / Renewal / Review',
-        'Life / Term Insurance',
-        'Bike Insurance',
-        'Car Insurance',
-        'Commercial Vehicle Insurance',
-        'Loan Guidance',
-        'Claim Assistance',
-        'Not sure — need general advice',
-      ],
+      required: [true, 'City is required'],
+      trim: true,
+      maxlength: [100, 'City name too long'],
     },
-    preferredLanguage: {
+
+    // ── Step 3: Department-specific details ───────────────
+    // Flexible object — structure varies per department:
+    // LOAN:       { loanType, loanAmount, employmentType, monthlyIncome, existingLoans }
+    // HEALTH:     { coverage, sumInsured, existingPolicy, preExisting }
+    // LIFE:       { ageGroup, smoker, planType, coverageAmount, dependants }
+    // BIKE/CAR:   { regNumber, makeModel, year, currentInsurer, coverageType, addOns }
+    // COMMERCIAL: { vehicleType, numberOfVehicles, goodsCarrierType, currentInsurer, coverageType }
+    details: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {},
+    },
+
+    // ── Step 4: Schedule preferences ──────────────────────
+    contactMethod: {
       type: String,
-      enum: ['Telugu', 'English', 'Telugu + English (mix)'],
-      default: 'Telugu',
+      enum: ['Phone Call', 'WhatsApp', 'Email'],
+      default: 'Phone Call',
     },
-    preferredTimeSlot: {
+    timeSlot: {
       type: String,
       enum: [
         'Morning (9 AM – 12 PM)',
-        'Afternoon (12 PM – 3 PM)',
-        'Evening (3 PM – 7 PM)',
-        'Any time is fine',
+        'Afternoon (12 PM – 4 PM)',
+        'Evening (4 PM – 7 PM)',
       ],
-      default: 'Any time is fine',
+      default: 'Morning (9 AM – 12 PM)',
     },
     notes: {
       type: String,
@@ -62,36 +76,24 @@ const bookingSchema = new mongoose.Schema(
       default: '',
     },
 
-    // Admin fields
+    // ── Admin / system fields ──────────────────────────────
     status: {
       type: String,
       enum: ['new', 'confirmed', 'completed', 'cancelled', 'no-show'],
       default: 'new',
     },
-    scheduledAt: {
-      type: Date,
-      default: null,
-    },
-    adminNotes: {
-      type: String,
-      default: '',
-    },
-    source: {
-      type: String,
-      default: 'book-form',
-    },
-    ipAddress: {
-      type: String,
-      default: '',
-    },
+    scheduledAt: { type: Date, default: null },
+    adminNotes:  { type: String, default: '' },
+    source:      { type: String, default: 'book-form' },
+    referredFrom:{ type: String, default: '' },
+    ipAddress:   { type: String, default: '' },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
 bookingSchema.index({ createdAt: -1 });
 bookingSchema.index({ status: 1 });
+bookingSchema.index({ department: 1 });
 bookingSchema.index({ phone: 1 });
 
 module.exports = mongoose.model('Booking', bookingSchema);
