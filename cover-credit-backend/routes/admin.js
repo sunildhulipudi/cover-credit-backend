@@ -1,6 +1,7 @@
 // ============================================================
 // ROUTE: /api/admin
 // Protected admin endpoints — all require valid JWT
+// Updated for new department-based booking form
 // ============================================================
 
 const express  = require('express');
@@ -24,7 +25,7 @@ router.get('/stats', async (req, res) => {
       newContacts,
       newBookings,
       contactsByInterest,
-      bookingsByTopic,
+      bookingsByDepartment,   // ← was bookingsByTopic
       recentActivity,
     ] = await Promise.all([
       Contact.countDocuments(),
@@ -38,9 +39,9 @@ router.get('/stats', async (req, res) => {
         { $sort:  { count: -1 } },
       ]),
 
-      // Group bookings by topic
+      // Group bookings by department (replaces old topic grouping)
       Booking.aggregate([
-        { $group: { _id: '$topic', count: { $sum: 1 } } },
+        { $group: { _id: '$department', count: { $sum: 1 } } },
         { $sort:  { count: -1 } },
       ]),
 
@@ -56,13 +57,13 @@ router.get('/stats', async (req, res) => {
       stats: {
         totalContacts,
         totalBookings,
-        totalLeads: totalContacts + totalBookings,
+        totalLeads:  totalContacts + totalBookings,
         newContacts,
         newBookings,
-        newLeads: newContacts + newBookings,
+        newLeads:    newContacts + newBookings,
       },
       contactsByInterest,
-      bookingsByTopic,
+      bookingsByDepartment,      // ← renamed
       recentContacts: recentActivity[0],
       recentBookings: recentActivity[1],
     });
@@ -79,9 +80,9 @@ router.get('/stats', async (req, res) => {
 // GET /api/admin/contacts?page=1&limit=20&status=new&search=ravi
 router.get('/contacts', async (req, res) => {
   try {
-    const page   = Math.max(1, parseInt(req.query.page)  || 1);
-    const limit  = Math.min(100, parseInt(req.query.limit) || 20);
-    const skip   = (page - 1) * limit;
+    const page  = Math.max(1, parseInt(req.query.page)  || 1);
+    const limit = Math.min(100, parseInt(req.query.limit) || 20);
+    const skip  = (page - 1) * limit;
 
     const filter = {};
     if (req.query.status && req.query.status !== 'all') {
@@ -112,7 +113,7 @@ router.get('/contacts', async (req, res) => {
   }
 });
 
-// PATCH /api/admin/contacts/:id — update status or notes
+// PATCH /api/admin/contacts/:id
 router.patch('/contacts/:id', async (req, res) => {
   try {
     const allowed = ['status', 'adminNotes'];
@@ -144,24 +145,29 @@ router.delete('/contacts/:id', async (req, res) => {
 // BOOKINGS
 // ══════════════════════════════════════════════════════════
 
-// GET /api/admin/bookings?page=1&status=new&search=
+// GET /api/admin/bookings?page=1&status=new&department=bike&search=
 router.get('/bookings', async (req, res) => {
   try {
-    const page   = Math.max(1, parseInt(req.query.page)  || 1);
-    const limit  = Math.min(100, parseInt(req.query.limit) || 20);
-    const skip   = (page - 1) * limit;
+    const page  = Math.max(1, parseInt(req.query.page)  || 1);
+    const limit = Math.min(100, parseInt(req.query.limit) || 20);
+    const skip  = (page - 1) * limit;
 
     const filter = {};
     if (req.query.status && req.query.status !== 'all') {
       filter.status = req.query.status;
     }
+    // New: filter by department
+    if (req.query.department && req.query.department !== 'all') {
+      filter.department = req.query.department;
+    }
     if (req.query.search) {
       const s = req.query.search.trim();
       filter.$or = [
-        { name:  { $regex: s, $options: 'i' } },
-        { phone: { $regex: s, $options: 'i' } },
-        { email: { $regex: s, $options: 'i' } },
-        { topic: { $regex: s, $options: 'i' } },
+        { name:       { $regex: s, $options: 'i' } },
+        { phone:      { $regex: s, $options: 'i' } },
+        { email:      { $regex: s, $options: 'i' } },
+        { city:       { $regex: s, $options: 'i' } },      // ← new
+        { department: { $regex: s, $options: 'i' } },      // ← new
       ];
     }
 
