@@ -1,4 +1,3 @@
-
 // ============================================================
 // ROUTE: /api/admin
 // Protected admin endpoints — all require valid JWT
@@ -10,6 +9,7 @@ const router   = express.Router();
 const auth     = require('../middleware/auth');
 const Contact  = require('../models/Contact');
 const Booking  = require('../models/Booking');
+const { sendReminderEmail } = require('../utils/email');
 
 // Apply auth to ALL admin routes
 router.use(auth);
@@ -26,7 +26,7 @@ router.get('/stats', async (req, res) => {
       newContacts,
       newBookings,
       contactsByInterest,
-      bookingsByDepartment,   // ← was bookingsByTopic
+      bookingsByDepartment,
       recentActivity,
     ] = await Promise.all([
       Contact.countDocuments(),
@@ -34,19 +34,16 @@ router.get('/stats', async (req, res) => {
       Contact.countDocuments({ status: 'new' }),
       Booking.countDocuments({ status: 'new' }),
 
-      // Group contacts by interest
       Contact.aggregate([
         { $group: { _id: '$interest', count: { $sum: 1 } } },
         { $sort:  { count: -1 } },
       ]),
 
-      // Group bookings by department (replaces old topic grouping)
       Booking.aggregate([
         { $group: { _id: '$department', count: { $sum: 1 } } },
         { $sort:  { count: -1 } },
       ]),
 
-      // Last 5 of each
       Promise.all([
         Contact.find().sort({ createdAt: -1 }).limit(5).lean(),
         Booking.find().sort({ createdAt: -1 }).limit(5).lean(),
@@ -64,7 +61,7 @@ router.get('/stats', async (req, res) => {
         newLeads:    newContacts + newBookings,
       },
       contactsByInterest,
-      bookingsByDepartment,      // ← renamed
+      bookingsByDepartment,
       recentContacts: recentActivity[0],
       recentBookings: recentActivity[1],
     });
@@ -78,7 +75,6 @@ router.get('/stats', async (req, res) => {
 // CONTACTS
 // ══════════════════════════════════════════════════════════
 
-// GET /api/admin/contacts?page=1&limit=20&status=new&search=ravi
 router.get('/contacts', async (req, res) => {
   try {
     const page  = Math.max(1, parseInt(req.query.page)  || 1);
@@ -114,7 +110,6 @@ router.get('/contacts', async (req, res) => {
   }
 });
 
-// PATCH /api/admin/contacts/:id
 router.patch('/contacts/:id', async (req, res) => {
   try {
     const allowed = ['status', 'adminNotes'];
@@ -132,7 +127,6 @@ router.patch('/contacts/:id', async (req, res) => {
   }
 });
 
-// DELETE /api/admin/contacts/:id
 router.delete('/contacts/:id', async (req, res) => {
   try {
     await Contact.findByIdAndDelete(req.params.id);
@@ -146,7 +140,6 @@ router.delete('/contacts/:id', async (req, res) => {
 // BOOKINGS
 // ══════════════════════════════════════════════════════════
 
-// GET /api/admin/bookings?page=1&status=new&department=bike&search=
 router.get('/bookings', async (req, res) => {
   try {
     const page  = Math.max(1, parseInt(req.query.page)  || 1);
@@ -157,7 +150,6 @@ router.get('/bookings', async (req, res) => {
     if (req.query.status && req.query.status !== 'all') {
       filter.status = req.query.status;
     }
-    // New: filter by department
     if (req.query.department && req.query.department !== 'all') {
       filter.department = req.query.department;
     }
@@ -167,8 +159,8 @@ router.get('/bookings', async (req, res) => {
         { name:       { $regex: s, $options: 'i' } },
         { phone:      { $regex: s, $options: 'i' } },
         { email:      { $regex: s, $options: 'i' } },
-        { city:       { $regex: s, $options: 'i' } },      // ← new
-        { department: { $regex: s, $options: 'i' } },      // ← new
+        { city:       { $regex: s, $options: 'i' } },
+        { department: { $regex: s, $options: 'i' } },
       ];
     }
 
@@ -187,7 +179,7 @@ router.get('/bookings', async (req, res) => {
   }
 });
 
-// PATCH /api/admin/bookings/:id
+// PATCH /api/admin/bookings/:id — update status / scheduledAt / adminNotes
 router.patch('/bookings/:id', async (req, res) => {
   try {
     const allowed = ['status', 'adminNotes', 'scheduledAt'];
@@ -205,13 +197,88 @@ router.patch('/bookings/:id', async (req, res) => {
   }
 });
 
-// DELETE /api/admin/bookings/:id
 router.delete('/bookings/:id', async (req, res) => {
   try {
     await Booking.findByIdAndDelete(req.params.id);
     res.json({ success: true, message: 'Deleted.' });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Delete failed.' });
+  }
+});
+
+// ══════════════════════════════════════════════════════════
+// CALL NOTES  POST /api/admin/bookings/:id/note
+// Appends a new timestamped note to callNotes array.
+// Never overwrites — each note is permanent with its own timestamp.
+// ══════════════════════════════════════════════════════════
+router.post('/bookings/:id/note', async (req, res) => {
+  try {
+    const { text } = req.body;
+    if (!text || !String(text).trim()) {
+      return res.status(400).json({ success: false, message: 'Note text is required.' });
+    }
+
+    const newNote = { text: String(text).trim(), addedAt: new Date() };
+
+    const booking = await Booking.findByIdAndUpdate(
+      req.params.id,
+      { $push: { callNotes: newNote } },
+      { new: true }
+    );
+    if (!booking) return res.status(404).json({ success: false, message: 'Booking not found.' });
+
+    res.json({ success: true, data: booking });
+  } catch (err) {
+    console.error('Add note error:', err);
+    res.status(500).json({ success: false, message: 'Failed to save note.' });
+  }
+});
+
+// ══════════════════════════════════════════════════════════
+// REMINDER  POST /api/admin/bookings/:id/reminder
+// Saves reminder date/time + note, then emails admin immediately
+// to confirm the reminder was set.
+// The actual "due" email is sent by the cron in server.js.
+// ══════════════════════════════════════════════════════════
+router.post('/bookings/:id/reminder', async (req, res) => {
+  try {
+    const { scheduledAt, note } = req.body;
+
+    if (!scheduledAt) {
+      return res.status(400).json({ success: false, message: 'Reminder date & time is required.' });
+    }
+
+    const reminderDate = new Date(scheduledAt);
+    if (isNaN(reminderDate.getTime())) {
+      return res.status(400).json({ success: false, message: 'Invalid date/time.' });
+    }
+    if (reminderDate <= new Date()) {
+      return res.status(400).json({ success: false, message: 'Reminder must be a future date and time.' });
+    }
+
+    const reminder = {
+      scheduledAt: reminderDate,
+      note:        (note || '').trim(),
+      sent:        false,
+      sentAt:      null,
+    };
+
+    const booking = await Booking.findByIdAndUpdate(
+      req.params.id,
+      { $set: { reminder } },
+      { new: true }
+    );
+    if (!booking) return res.status(404).json({ success: false, message: 'Booking not found.' });
+
+    // Send "reminder set" confirmation email to admin (non-blocking)
+    sendReminderEmail(booking, 'set').catch(err =>
+      console.error('Reminder confirmation email failed:', err.message)
+    );
+
+    res.json({ success: true, data: booking });
+  } catch (err) {
+    console.error('Set reminder error:', err);
+    res.status(500).json({ success: false, message: 'Failed to set reminder.' });
   }
 });
 
