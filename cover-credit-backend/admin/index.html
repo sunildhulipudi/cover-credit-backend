@@ -13,7 +13,7 @@
       --text:#1c1c1c;    --muted:#6b6b6b;
       --border:#e5e0d8;
       --green:#2da44e;   --red:#cf4343;  --orange:#e07b00;
-      --blue:#0969da;
+      --blue:#0969da;    --purple:#7c3aed;
       --sidebar:248px;
     }
     *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
@@ -115,8 +115,7 @@
     .dept-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));
       gap:.7rem;margin-bottom:2rem;}
     .dept-tile{background:var(--white);border:1px solid var(--border);
-      border-radius:10px;padding:.9rem 1rem;display:flex;align-items:center;
-      gap:.7rem;}
+      border-radius:10px;padding:.9rem 1rem;display:flex;align-items:center;gap:.7rem;}
     .dept-tile-ico{font-size:1.2rem;}
     .dept-tile-body{min-width:0;}
     .dept-tile-count{font-family:'Playfair Display',serif;font-size:1.4rem;
@@ -189,7 +188,6 @@
     .badge-cancelled{background:#fdf0f0;color:var(--red);}
     .badge-noshow   {background:#fff0f0;color:var(--red);}
 
-    /* Contact method icon */
     .cm-chip{font-size:.75rem;color:var(--muted);}
 
     /* Action buttons */
@@ -200,10 +198,13 @@
       transition:opacity .2s;white-space:nowrap;
     }
     .act-btn:hover{opacity:.75;}
-    .act-edit  {background:#e8f4fd;color:#0969da;}
-    .act-delete{background:#fdf0f0;color:var(--red);}
-    .act-call  {background:#edf8f1;color:var(--green);}
-    .act-wa    {background:#e8fdf0;color:#128c53;}
+    .act-edit     {background:#e8f4fd;color:#0969da;}
+    .act-delete   {background:#fdf0f0;color:var(--red);}
+    .act-call     {background:#edf8f1;color:var(--green);}
+    .act-wa       {background:#e8fdf0;color:#128c53;}
+    /* Reminder button — purple, fills solid when a reminder is active */
+    .act-reminder         {background:#f3e8ff;color:var(--purple);}
+    .act-reminder.is-set  {background:var(--purple);color:#fff;}
 
     /* ── PAGINATION ── */
     .pagination{display:flex;align-items:center;gap:.45rem;margin-top:1.1rem;
@@ -217,7 +218,7 @@
       border-color:var(--accent);color:var(--white);}
     .page-info{font-size:.8rem;color:var(--muted);margin-right:.4rem;}
 
-    /* ── MODAL ── */
+    /* ── EDIT MODAL ── */
     .modal-overlay{
       display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);
       z-index:500;align-items:center;justify-content:center;padding:1rem;
@@ -243,13 +244,15 @@
     .modal-details p:last-child{margin-bottom:0;}
     .modal label{display:block;font-size:.82rem;font-weight:600;
       color:var(--primary);margin-bottom:.3rem;margin-top:.9rem;}
-    .modal select,.modal textarea{
+    .modal select,.modal textarea,.modal input[type="datetime-local"]{
       width:100%;padding:.65rem .9rem;border:1.5px solid var(--border);
       border-radius:7px;font-family:inherit;font-size:.9rem;outline:none;
       transition:border-color .2s;background:var(--white);
     }
-    .modal select:focus,.modal textarea:focus{border-color:var(--accent);}
-    .modal textarea{resize:vertical;min-height:100px;}
+    .modal select:focus,.modal textarea:focus,.modal input[type="datetime-local"]:focus{
+      border-color:var(--accent);
+    }
+    .modal textarea{resize:vertical;min-height:90px;}
     .modal-actions{display:flex;gap:.8rem;margin-top:1.5rem;justify-content:flex-end;}
     .modal-save{background:var(--accent);color:var(--white);border:none;
       padding:.65rem 1.4rem;border-radius:7px;font-family:inherit;
@@ -258,6 +261,65 @@
     .modal-cancel{background:var(--bg);color:var(--text);border:1px solid var(--border);
       padding:.65rem 1.4rem;border-radius:7px;font-family:inherit;
       font-size:.9rem;font-weight:600;cursor:pointer;}
+
+    /* ── CALL LOG (inside edit modal, bookings only) ── */
+    .call-log{border:1px solid var(--border);border-radius:8px;overflow:hidden;
+      max-height:220px;overflow-y:auto;margin-top:.3rem;}
+    .call-log-empty{padding:1rem;text-align:center;font-size:.82rem;color:var(--muted);
+      background:#fafaf8;}
+    .call-log-entry{padding:.8rem 1rem;border-bottom:1px solid var(--border);}
+    .call-log-entry:last-child{border-bottom:none;}
+    .call-log-entry:nth-child(odd){background:#fdfcfb;}
+    .call-log-text{font-size:.86rem;color:var(--text);line-height:1.55;white-space:pre-wrap;}
+    .call-log-meta{font-size:.7rem;color:var(--muted);margin-top:.3rem;}
+    .call-log-latest{font-size:.65rem;font-weight:700;color:var(--green);
+      margin-left:.4rem;text-transform:uppercase;letter-spacing:.5px;}
+
+    /* Add note area */
+    .note-add-wrap{background:#f0f6ff;border:1.5px solid #c5daf5;border-radius:8px;
+      padding:.9rem 1rem;margin-top:.6rem;}
+    .note-add-label{font-size:.72rem;font-weight:700;color:#0969da;
+      text-transform:uppercase;letter-spacing:.8px;margin-bottom:.5rem;}
+    .note-add-wrap textarea{min-height:72px;}
+    .note-save-btn{margin-top:.5rem;background:#0969da;color:#fff;border:none;
+      padding:.5rem 1.1rem;border-radius:6px;font-family:inherit;font-size:.84rem;
+      font-weight:700;cursor:pointer;transition:background .2s;}
+    .note-save-btn:hover{background:#0757b5;}
+    .note-save-btn:disabled{background:#9ab5d6;cursor:not-allowed;}
+
+    /* ── REMINDER MODAL ── */
+    .reminder-modal{
+      background:var(--white);border-radius:14px;padding:2rem;
+      width:100%;max-width:460px;
+      box-shadow:0 24px 60px rgba(0,0,0,.2);
+    }
+    .reminder-modal h3{font-family:'Playfair Display',serif;font-size:1.15rem;
+      color:var(--purple);margin-bottom:.4rem;}
+    .reminder-modal-sub{font-size:.8rem;color:var(--muted);margin-bottom:1.2rem;}
+    .reminder-customer{background:#f5f0ff;border-radius:8px;padding:.85rem 1rem;
+      margin-bottom:1.1rem;}
+    .reminder-customer p{font-size:.84rem;color:var(--text);margin-bottom:.25rem;line-height:1.5;}
+    .reminder-customer p:last-child{margin-bottom:0;}
+    .reminder-customer strong{color:var(--primary);}
+    .reminder-modal label{display:block;font-size:.82rem;font-weight:600;
+      color:var(--primary);margin-bottom:.3rem;margin-top:.9rem;}
+    .reminder-modal input[type="datetime-local"],.reminder-modal textarea{
+      width:100%;padding:.65rem .9rem;border:1.5px solid var(--border);
+      border-radius:7px;font-family:inherit;font-size:.9rem;outline:none;
+      transition:border-color .2s;background:var(--white);
+    }
+    .reminder-modal input[type="datetime-local"]:focus,
+    .reminder-modal textarea:focus{border-color:var(--purple);}
+    .reminder-modal textarea{resize:vertical;min-height:72px;}
+    .reminder-modal-actions{display:flex;gap:.8rem;margin-top:1.5rem;justify-content:flex-end;}
+    .reminder-set-btn{background:var(--purple);color:#fff;border:none;
+      padding:.65rem 1.4rem;border-radius:7px;font-family:inherit;
+      font-size:.9rem;font-weight:700;cursor:pointer;transition:background .2s;}
+    .reminder-set-btn:hover{background:#6d28d9;}
+    .reminder-set-btn:disabled{background:#b3a0d4;cursor:not-allowed;}
+    /* Small reminder indicator shown under booking row actions */
+    .reminder-chip{font-size:.67rem;color:var(--purple);margin-top:.25rem;
+      display:flex;align-items:center;gap:.25rem;}
 
     /* ── EMPTY ── */
     .empty{text-align:center;padding:3rem;color:var(--muted);}
@@ -270,11 +332,12 @@
       background:var(--primary-dark);color:var(--white);
       padding:.8rem 1.4rem;border-radius:8px;font-size:.88rem;
       font-weight:500;box-shadow:0 8px 24px rgba(0,0,0,.2);
-      transform:translateY(100px);opacity:0;transition:.3s ease;
+      transform:translateY(100px);opacity:0;transition:.3s ease;max-width:320px;
     }
     .toast.show{transform:translateY(0);opacity:1;}
     .toast.success{background:#1a6e35;}
     .toast.error  {background:var(--red);}
+    .toast.info   {background:var(--purple);}
 
     .loading{text-align:center;padding:2rem;color:var(--muted);font-size:.9rem;}
 
@@ -340,14 +403,11 @@
         <div class="stats-row" id="stats-row">
           <div class="loading">Loading stats…</div>
         </div>
-
-        <!-- Department breakdown tiles -->
         <p style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;
            letter-spacing:1.2px;margin-bottom:.8rem;">Bookings by Department</p>
         <div class="dept-grid" id="dept-grid">
           <div class="loading">Loading…</div>
         </div>
-
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
           <div>
             <p style="font-family:'Playfair Display',serif;font-size:1.05rem;
@@ -454,19 +514,19 @@
   <div class="modal" id="modal">
     <h3 id="modal-title">Edit Lead</h3>
 
-    <!-- Contact info section -->
+    <!-- Contact info -->
     <div class="modal-section">
       <div class="modal-section-title">Contact Details</div>
       <div class="modal-info" id="modal-contact-info"></div>
     </div>
 
-    <!-- Dept-specific details section (bookings only) -->
+    <!-- Dept-specific details (bookings only) -->
     <div class="modal-section" id="modal-details-section" style="display:none;">
       <div class="modal-section-title" id="modal-details-title">Details</div>
       <div class="modal-details" id="modal-details-body"></div>
     </div>
 
-    <!-- Schedule section (bookings only) -->
+    <!-- Schedule (bookings only) -->
     <div class="modal-section" id="modal-schedule-section" style="display:none;">
       <div class="modal-section-title">Contact Preference</div>
       <div class="modal-info" id="modal-schedule-info"></div>
@@ -476,17 +536,55 @@
     <select id="modal-status"></select>
 
     <label>Scheduled At (optional)</label>
-    <input type="datetime-local" id="modal-scheduled"
-      style="width:100%;padding:.65rem .9rem;border:1.5px solid var(--border);
-             border-radius:7px;font-family:inherit;font-size:.9rem;outline:none;
-             background:var(--white);margin-bottom:.5rem;"/>
+    <input type="datetime-local" id="modal-scheduled"/>
 
-    <label>Admin Notes</label>
-    <textarea id="modal-notes" placeholder="Add internal notes here…"></textarea>
+    <!-- ── CALL NOTES LOG (bookings only) ── -->
+    <div id="modal-callnotes-section" style="display:none;">
+      <label style="margin-top:1.1rem;">Call Notes Log</label>
+      <div id="modal-call-log" class="call-log"></div>
+
+      <!-- Add new note with its own Save button -->
+      <div class="note-add-wrap">
+        <div class="note-add-label">📝 Add Note From This Call</div>
+        <textarea id="modal-new-note"
+          placeholder="What happened in this call? Outcome, follow-up needed, customer query…"></textarea>
+        <button class="note-save-btn" id="note-save-btn" onclick="saveNote()">Save Note</button>
+      </div>
+    </div>
+
+    <!-- Admin notes (contacts only) -->
+    <div id="modal-adminnotes-section">
+      <label>Admin Notes</label>
+      <textarea id="modal-notes" placeholder="Add internal notes here…"></textarea>
+    </div>
 
     <div class="modal-actions">
       <button class="modal-cancel" onclick="closeModal()">Cancel</button>
       <button class="modal-save" onclick="saveEdit()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ REMINDER MODAL ═══ -->
+<div class="modal-overlay" id="reminder-overlay" onclick="closeReminderModal(event)">
+  <div class="reminder-modal">
+    <h3>⏰ Set Reminder</h3>
+    <p class="reminder-modal-sub">You'll receive an email when it's time to call this customer.</p>
+
+    <!-- Customer summary -->
+    <div class="reminder-customer" id="reminder-customer-info"></div>
+
+    <label>Reminder Date &amp; Time *</label>
+    <input type="datetime-local" id="reminder-datetime"/>
+    <div style="font-size:.72rem;color:var(--muted);margin-top:.3rem;">Times are in your local timezone (IST)</div>
+
+    <label>Note to yourself (optional)</label>
+    <textarea id="reminder-note"
+      placeholder="e.g. Ask about health plan for 4 members, check if they've compared other quotes…"></textarea>
+
+    <div class="reminder-modal-actions">
+      <button class="modal-cancel" onclick="closeReminderModal()">Cancel</button>
+      <button class="reminder-set-btn" id="reminder-set-btn" onclick="setReminder()">⏰ Set Reminder</button>
     </div>
   </div>
 </div>
@@ -509,7 +607,6 @@ const DEPT = {
   commercial: { label:'Commercial Vehicle Insurance',icon:'🚛', cls:'dept-commercial' },
 };
 
-// Human-readable labels for dept details fields
 const DETAIL_LABELS = {
   loanType:'Loan Type', loanAmount:'Loan Amount', employmentType:'Employment Type',
   monthlyIncome:'Monthly Income', existingLoans:'Existing Loans',
@@ -527,6 +624,7 @@ const DETAIL_LABELS = {
 let token       = localStorage.getItem('cc_token') || '';
 let editType    = '';
 let editId      = '';
+let reminderId  = '';
 let currentPage = { bookings: 1, contacts: 1 };
 
 // ── Init ─────────────────────────────────────────────────
@@ -534,6 +632,12 @@ window.addEventListener('DOMContentLoaded', () => {
   updateClock();
   setInterval(updateClock, 30000);
   if (token) verifyToken();
+  // Default reminder datetime to tomorrow 10 AM
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  d.setHours(10, 0, 0, 0);
+  const local = new Date(d - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  document.getElementById('reminder-datetime').value = local;
 });
 
 function updateClock() {
@@ -575,6 +679,7 @@ async function doLogin() {
 }
 
 document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeModal(); closeReminderModal(); }
   if (e.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') {
     doLogin();
   }
@@ -656,17 +761,14 @@ async function loadDashboard() {
       <div class="stat-sub">${s.newContacts} new</div>
     </div>`;
 
-  // Nav badges
   const bb = document.getElementById('nav-booking-badge');
   const cb = document.getElementById('nav-contact-badge');
   bb.textContent = s.newBookings > 0 ? s.newBookings : '';
   cb.textContent = s.newContacts > 0 ? s.newContacts : '';
 
-  // Department breakdown tiles
   const deptData = {};
   (r.bookingsByDepartment || []).forEach(d => { deptData[d._id] = d.count; });
-  const allDepts = Object.entries(DEPT);
-  document.getElementById('dept-grid').innerHTML = allDepts.map(([key, d]) => `
+  document.getElementById('dept-grid').innerHTML = Object.entries(DEPT).map(([key, d]) => `
     <div class="dept-tile">
       <span class="dept-tile-ico">${d.icon}</span>
       <div class="dept-tile-body">
@@ -698,7 +800,7 @@ function miniContactTable(rows) {
   if (!rows?.length) return '<div class="empty"><div class="empty-icon">📭</div><p>No contacts yet</p></div>';
   const items = rows.map(c => `<tr>
     <td class="td-name">${esc(c.firstName)} ${esc(c.lastName)}</td>
-    <td><a href="tel:${c.phone}" class="td-phone" style="color:var(--accent);font-weight:600;">${c.phone}</a></td>
+    <td><a href="tel:${c.phone}" style="color:var(--accent);font-weight:600;">${c.phone}</a></td>
     <td><span class="badge badge-${c.status||'new'}">${c.status||'new'}</span></td>
     <td class="td-date">${fmtDate(c.createdAt)}</td>
   </tr>`).join('');
@@ -731,6 +833,13 @@ async function loadBookings(page = currentPage.bookings) {
     const d  = DEPT[b.department] || { icon:'📋', label: b.department, cls:'' };
     const cm = { 'Phone Call':'📞', 'WhatsApp':'💬', 'Email':'📧' }[b.contactMethod] || '📞';
     const slot = (b.timeSlot || '').replace(' (9 AM – 12 PM)','').replace(' (12 PM – 4 PM)','').replace(' (4 PM – 7 PM)','');
+
+    // Reminder state
+    const hasActiveReminder = b.reminder && b.reminder.scheduledAt && !b.reminder.sent;
+    const reminderChip = hasActiveReminder
+      ? `<div class="reminder-chip">⏰ ${fmtDate(b.reminder.scheduledAt)}</div>`
+      : (b.reminder && b.reminder.sent ? `<div class="reminder-chip" style="color:var(--green);">✅ Reminder sent</div>` : '');
+
     return `<tr>
       <td class="td-name">${esc(b.name)}</td>
       <td class="td-phone"><a href="tel:${b.phone}">${b.phone}</a></td>
@@ -745,8 +854,11 @@ async function loadBookings(page = currentPage.bookings) {
           <a href="tel:${b.phone}" class="act-btn act-call">📞</a>
           <a href="https://wa.me/${b.phone.replace(/\D/g,'')}" target="_blank" class="act-btn act-wa">💬</a>
           <button class="act-btn act-edit" onclick="openEditById('booking','${b._id}')">Edit</button>
+          <button class="act-btn act-reminder${hasActiveReminder ? ' is-set' : ''}"
+            onclick="openReminderModal('${b._id}')" title="${hasActiveReminder ? 'Reminder active — click to change' : 'Set a reminder'}">⏰</button>
           <button class="act-btn act-delete" onclick="deleteLead('booking','${b._id}')">Del</button>
         </div>
+        ${reminderChip}
       </td>
     </tr>`;
   }).join('');
@@ -812,7 +924,6 @@ const contactStatuses = ['new','contacted','converted','closed'];
 
 async function openEditById(type, id) {
   showToast('Loading…');
-  // Try to get fresh data; fall back to cache
   try {
     const path = type === 'booking'
       ? `/admin/bookings?page=1&limit=200&status=all`
@@ -838,7 +949,7 @@ function openEdit(type, data) {
   document.getElementById('modal-title').textContent =
     isBooking ? '📅 Edit Booking' : '📩 Edit Contact';
 
-  // ── Contact info ──
+  // Contact info
   const name = isBooking ? data.name : `${data.firstName} ${data.lastName}`;
   document.getElementById('modal-contact-info').innerHTML = `
     <p><strong>Name:</strong> ${esc(name)}</p>
@@ -850,11 +961,10 @@ function openEdit(type, data) {
   `;
 
   if (isBooking) {
-    // ── Dept details ──
+    // Dept details
     const dept = DEPT[data.department] || { label: data.department, icon: '📋' };
     document.getElementById('modal-details-section').style.display = 'block';
     document.getElementById('modal-details-title').textContent = `${dept.icon} ${dept.label} — Specifics`;
-
     const details = data.details || {};
     const detailRows = Object.entries(details)
       .filter(([, v]) => v && v !== '')
@@ -863,7 +973,7 @@ function openEdit(type, data) {
     document.getElementById('modal-details-body').innerHTML =
       detailRows || '<p style="color:var(--muted);font-size:.82rem;">No specific details captured.</p>';
 
-    // ── Schedule ──
+    // Schedule
     document.getElementById('modal-schedule-section').style.display = 'block';
     document.getElementById('modal-schedule-info').innerHTML = `
       <p><strong>Contact Via:</strong> ${esc(data.contactMethod || 'Phone Call')}</p>
@@ -871,23 +981,49 @@ function openEdit(type, data) {
       ${data.notes ? `<p><strong>Notes:</strong> ${esc(data.notes)}</p>` : ''}
     `;
 
-    // Scheduled at field
     document.getElementById('modal-scheduled').value =
       data.scheduledAt ? new Date(data.scheduledAt).toISOString().slice(0,16) : '';
-    document.getElementById('modal-scheduled').closest('label')?.nextElementSibling;
+
+    // Show call log section, hide plain admin notes
+    document.getElementById('modal-callnotes-section').style.display = 'block';
+    document.getElementById('modal-adminnotes-section').style.display = 'none';
+    document.getElementById('modal-new-note').value = '';
+    renderCallLog(data.callNotes || []);
+
   } else {
     document.getElementById('modal-details-section').style.display = 'none';
     document.getElementById('modal-schedule-section').style.display = 'none';
     document.getElementById('modal-scheduled').value = '';
+    // Show plain admin notes for contacts
+    document.getElementById('modal-callnotes-section').style.display = 'none';
+    document.getElementById('modal-adminnotes-section').style.display = 'block';
+    document.getElementById('modal-notes').value = data.adminNotes || '';
   }
 
-  // Status options
   const statuses = isBooking ? bookingStatuses : contactStatuses;
   document.getElementById('modal-status').innerHTML =
     statuses.map(s => `<option value="${s}"${s===data.status?' selected':''}>${s}</option>`).join('');
 
-  document.getElementById('modal-notes').value = data.adminNotes || '';
   document.getElementById('modal-overlay').classList.add('show');
+}
+
+// ── Render call notes log ────────────────────────────────
+function renderCallLog(notes) {
+  const log = document.getElementById('modal-call-log');
+  if (!notes || notes.length === 0) {
+    log.innerHTML = '<div class="call-log-empty">No call notes yet. Add a note after each call.</div>';
+    return;
+  }
+  // Newest first
+  const sorted = [...notes].sort((a, b) => new Date(b.addedAt) - new Date(a.addedAt));
+  log.innerHTML = sorted.map((n, i) => `
+    <div class="call-log-entry">
+      <div class="call-log-text">${esc(n.text)}</div>
+      <div class="call-log-meta">
+        🕐 ${fmtDate(n.addedAt)}
+        ${i === 0 ? '<span class="call-log-latest">Latest</span>' : ''}
+      </div>
+    </div>`).join('');
 }
 
 function closeModal(e) {
@@ -896,26 +1032,142 @@ function closeModal(e) {
   }
 }
 
+// Save Changes — saves status + scheduledAt (bookings) or status + adminNotes (contacts)
 async function saveEdit() {
-  const status      = document.getElementById('modal-status').value;
-  const adminNotes  = document.getElementById('modal-notes').value;
-  const scheduledAt = document.getElementById('modal-scheduled').value || null;
-  const path = editType === 'booking'
+  const status = document.getElementById('modal-status').value;
+  const path   = editType === 'booking'
     ? `/admin/bookings/${editId}`
     : `/admin/contacts/${editId}`;
 
-  const payload = { status, adminNotes };
-  if (editType === 'booking' && scheduledAt) payload.scheduledAt = scheduledAt;
+  const payload = { status };
+
+  if (editType === 'booking') {
+    const scheduledAt = document.getElementById('modal-scheduled').value;
+    if (scheduledAt) payload.scheduledAt = scheduledAt;
+  } else {
+    payload.adminNotes = document.getElementById('modal-notes').value;
+  }
 
   const r = await apiFetch(path, 'PATCH', payload);
   if (r.success) {
     closeModal();
-    showToast('Updated successfully ✓', 'success');
+    showToast('Updated ✓', 'success');
     if (editType === 'booking') loadBookings();
     else loadContacts();
     loadDashboard();
   } else {
     showToast(r.message || 'Update failed', 'error');
+  }
+}
+
+// ── Save Call Note ────────────────────────────────────────
+// Posts to /api/admin/bookings/:id/note
+// Stays in the modal — refreshes the call log live
+async function saveNote() {
+  const text = document.getElementById('modal-new-note').value.trim();
+  if (!text) { showToast('Write something before saving.', 'error'); return; }
+
+  const btn = document.getElementById('note-save-btn');
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+
+  const r = await apiFetch(`/admin/bookings/${editId}/note`, 'POST', { text });
+
+  btn.disabled = false;
+  btn.textContent = 'Save Note';
+
+  if (r.success) {
+    // Update cache so table note counts refresh
+    if (window._bookingMap?.[editId]) {
+      window._bookingMap[editId].callNotes = r.data.callNotes;
+    }
+    // Re-render log in place — modal stays open
+    renderCallLog(r.data.callNotes || []);
+    document.getElementById('modal-new-note').value = '';
+    showToast('Note saved ✓', 'success');
+    loadBookings(); // refresh table in background
+  } else {
+    showToast(r.message || 'Failed to save note.', 'error');
+  }
+}
+
+// ── Reminder Modal ────────────────────────────────────────
+function openReminderModal(bookingId) {
+  reminderId = bookingId;
+  const b = (window._bookingMap || {})[bookingId];
+  if (!b) { showToast('Could not load booking. Refresh and try again.', 'error'); return; }
+
+  const dept = DEPT[b.department] || { icon: '📋', label: b.department };
+  const hasActive = b.reminder && b.reminder.scheduledAt && !b.reminder.sent;
+
+  document.getElementById('reminder-customer-info').innerHTML = `
+    <p><strong>${esc(b.name)}</strong> &nbsp;·&nbsp;
+       <a href="tel:${b.phone}" style="color:var(--accent);font-weight:600;">${b.phone}</a></p>
+    <p>${dept.icon} ${dept.label} &nbsp;·&nbsp; ${esc(b.city || '—')}</p>
+    ${hasActive
+      ? `<p style="color:var(--purple);font-size:.78rem;margin-top:.3rem;">
+           ⏰ Current reminder: ${fmtDate(b.reminder.scheduledAt)} — setting a new one will replace it.
+         </p>`
+      : ''}
+  `;
+
+  // Pre-fill note if reminder exists
+  document.getElementById('reminder-note').value =
+    (b.reminder && b.reminder.note) ? b.reminder.note : '';
+
+  // Pre-fill datetime if active reminder exists, else default tomorrow 10am
+  if (hasActive) {
+    const d = new Date(b.reminder.scheduledAt);
+    document.getElementById('reminder-datetime').value =
+      new Date(d - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  } else {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    d.setHours(10, 0, 0, 0);
+    document.getElementById('reminder-datetime').value =
+      new Date(d - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  }
+
+  document.getElementById('reminder-overlay').classList.add('show');
+}
+
+function closeReminderModal(e) {
+  if (!e || e.target === document.getElementById('reminder-overlay')) {
+    document.getElementById('reminder-overlay').classList.remove('show');
+  }
+}
+
+async function setReminder() {
+  const dtVal = document.getElementById('reminder-datetime').value;
+  const note  = document.getElementById('reminder-note').value.trim();
+
+  if (!dtVal) { showToast('Please pick a date and time.', 'error'); return; }
+
+  const scheduledAt = new Date(dtVal).toISOString();
+  if (new Date(dtVal) <= new Date()) {
+    showToast('Reminder must be a future date and time.', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('reminder-set-btn');
+  btn.disabled = true;
+  btn.textContent = 'Setting…';
+
+  const r = await apiFetch(`/admin/bookings/${reminderId}/reminder`, 'POST', { scheduledAt, note });
+
+  btn.disabled = false;
+  btn.textContent = '⏰ Set Reminder';
+
+  if (r.success) {
+    // Update local cache so table re-renders reminder chip immediately
+    if (window._bookingMap?.[reminderId]) {
+      window._bookingMap[reminderId].reminder = r.data.reminder;
+    }
+    closeReminderModal();
+    showToast('Reminder set! You\'ll get an email when it\'s due. ✓', 'info');
+    loadBookings();
+  } else {
+    showToast(r.message || 'Failed to set reminder.', 'error');
   }
 }
 
@@ -939,7 +1191,7 @@ function showToast(msg, type='') {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.className   = 'toast show ' + type;
-  setTimeout(() => t.classList.remove('show'), 3000);
+  setTimeout(() => t.classList.remove('show'), 3200);
 }
 
 // ── Helpers ───────────────────────────────────────────────
