@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard — Cover Credit</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --primary:#1a3c5e; --primary-dark:#0f2440;
+      --accent:#e8622a;  --accent-hover:#c94f1a;
+      --bg:#f8f6f1;      --white:#fff;
+      --text:#1c1c1c;    --muted:#6b6b6b;
+      --border:#e5e0d8;
+      --green:#2da44e;   --red:#cf4343;   --orange:#e07b00;
+      --reminder:#7c3aed;
+      --sidebar:240px;
+    }
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);}
+    a{text-decoration:none;color:inherit;}
+
+    /* ── LOGIN ── */
+    .login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,var(--primary),var(--primary-dark));}
+    .login-box{background:var(--white);border-radius:16px;padding:2.5rem;width:100%;max-width:400px;box-shadow:0 24px 60px rgba(0,0,0,.2);}
+    .login-logo{font-family:'Playfair Display',serif;font-size:1.8rem;color:var(--primary);margin-bottom:.3rem;}
+    .login-logo span{color:var(--accent);}
+    .login-sub{font-size:.84rem;color:var(--muted);margin-bottom:2rem;}
+    .login-box label{display:block;font-size:.82rem;font-weight:600;color:var(--primary);margin-bottom:.4rem;}
+    .login-box input{width:100%;padding:.75rem 1rem;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.92rem;margin-bottom:1rem;outline:none;transition:border-color .2s;}
+    .login-box input:focus{border-color:var(--accent);}
+    .login-btn{width:100%;padding:.85rem;background:var(--accent);color:var(--white);border:none;border-radius:8px;font-family:inherit;font-size:1rem;font-weight:600;cursor:pointer;transition:background .2s;}
+    .login-btn:hover{background:var(--accent-hover);}
+    .login-error{display:none;background:#fdf0f0;border:1px solid #f5c6c6;border-radius:6px;padding:.7rem 1rem;color:var(--red);font-size:.85rem;margin-top:.8rem;}
+
+    /* ── APP SHELL ── */
+    .app{display:none;}
+    .app.show{display:flex;min-height:100vh;}
+
+    /* ── SIDEBAR ── */
+    .sidebar{width:var(--sidebar);background:var(--primary-dark);color:var(--white);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;}
+    .sidebar-logo{padding:1.5rem 1.4rem;border-bottom:1px solid rgba(255,255,255,.1);font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--white);}
+    .sidebar-logo span{color:var(--accent);}
+    .sidebar-nav{flex:1;padding:1rem 0;overflow-y:auto;}
+    .nav-item{display:flex;align-items:center;gap:.7rem;padding:.75rem 1.4rem;font-size:.88rem;font-weight:500;color:rgba(255,255,255,.65);cursor:pointer;transition:background .2s,color .2s;border:none;background:none;width:100%;text-align:left;}
+    .nav-item:hover,.nav-item.active{background:rgba(255,255,255,.08);color:var(--white);}
+    .nav-item.active{border-left:3px solid var(--accent);}
+    .nav-icon{font-size:1rem;flex-shrink:0;}
+    .sidebar-bottom{padding:1rem 1.4rem;border-top:1px solid rgba(255,255,255,.1);}
+    .logout-btn{display:flex;align-items:center;gap:.5rem;font-size:.84rem;color:rgba(255,255,255,.5);cursor:pointer;background:none;border:none;font-family:inherit;padding:0;transition:color .2s;}
+    .logout-btn:hover{color:#f5a07a;}
+
+    /* ── MAIN ── */
+    .main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;}
+    .topbar{background:var(--white);border-bottom:1px solid var(--border);padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
+    .topbar-title{font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--primary);}
+    .topbar-time{font-size:.8rem;color:var(--muted);}
+    .content{padding:2rem;}
+
+    /* ── STAT CARDS ── */
+    .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:1.2rem;margin-bottom:2rem;}
+    .stat-card{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:1.4rem;position:relative;overflow:hidden;}
+    .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent);}
+    .stat-card.green::before{background:var(--green);}
+    .stat-card.orange::before{background:var(--orange);}
+    .stat-label{font-size:.75rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:.5rem;}
+    .stat-num{font-family:'Playfair Display',serif;font-size:2.2rem;font-weight:700;color:var(--primary);line-height:1;}
+    .stat-sub{font-size:.75rem;color:var(--muted);margin-top:.3rem;}
+
+    /* ── PANELS ── */
+    .panel{display:none;}
+    .panel.active{display:block;}
+    .panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;}
+    .panel-title{font-family:'Playfair Display',serif;font-size:1.4rem;color:var(--primary);}
+    .controls{display:flex;gap:.8rem;flex-wrap:wrap;align-items:center;}
+    .search-input{padding:.6rem 1rem;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.88rem;outline:none;min-width:220px;transition:border-color .2s;}
+    .search-input:focus{border-color:var(--accent);}
+    .filter-select{padding:.6rem .9rem;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.88rem;outline:none;background:var(--white);cursor:pointer;}
+
+    /* ── TABLE ── */
+    .table-wrap{background:var(--white);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+    table{width:100%;border-collapse:collapse;}
+    thead th{background:var(--primary);color:var(--white);padding:.9rem 1rem;text-align:left;font-size:.78rem;font-weight:600;letter-spacing:.5px;text-transform:uppercase;white-space:nowrap;}
+    tbody tr{transition:background .15s;}
+    tbody tr:hover{background:#faf8f5;}
+    tbody td{padding:.85rem 1rem;font-size:.86rem;border-bottom:1px solid var(--border);vertical-align:middle;}
+    tbody tr:last-child td{border-bottom:none;}
+    .td-name{font-weight:600;color:var(--primary);}
+    .td-phone a{color:var(--accent);font-weight:600;}
+    .td-date{color:var(--muted);font-size:.78rem;white-space:nowrap;}
+
+    /* Status badges */
+    .badge{display:inline-block;padding:.2rem .6rem;border-radius:100px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;}
+    .badge-new      {background:#fff3e8;color:#e07b00;}
+    .badge-contacted{background:#e8f4fd;color:#0969da;}
+    .badge-converted{background:#edf8f1;color:var(--green);}
+    .badge-closed   {background:#f5f5f5;color:var(--muted);}
+    .badge-confirmed{background:#e8f4fd;color:#0969da;}
+    .badge-completed{background:#edf8f1;color:var(--green);}
+    .badge-cancelled{background:#fdf0f0;color:var(--red);}
+    .badge-noshow   {background:#fff0f0;color:var(--red);}
+
+    /* Action buttons */
+    .actions{display:flex;gap:.4rem;flex-wrap:wrap;}
+    .act-btn{padding:.3rem .6rem;border-radius:5px;font-size:.75rem;font-weight:600;cursor:pointer;border:none;font-family:inherit;transition:opacity .2s;}
+    .act-btn:hover{opacity:.8;}
+    .act-edit    {background:#e8f4fd;color:#0969da;}
+    .act-delete  {background:#fdf0f0;color:var(--red);}
+    .act-call    {background:#edf8f1;color:var(--green);}
+    .act-reminder{background:#f3e8ff;color:var(--reminder);}
+    .act-reminder.has-reminder{background:#7c3aed;color:#fff;}
+
+    /* ── PAGINATION ── */
+    .pagination{display:flex;align-items:center;gap:.5rem;margin-top:1.2rem;justify-content:flex-end;flex-wrap:wrap;}
+    .page-btn{padding:.4rem .8rem;border:1.5px solid var(--border);border-radius:6px;background:var(--white);font-family:inherit;font-size:.84rem;cursor:pointer;transition:background .15s,border-color .15s;}
+    .page-btn:hover,.page-btn.active{background:var(--accent);border-color:var(--accent);color:var(--white);}
+    .page-info{font-size:.82rem;color:var(--muted);}
+
+    /* ── MODALS ── */
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.48);z-index:500;align-items:center;justify-content:center;padding:1rem;}
+    .modal-overlay.show{display:flex;}
+    .modal{background:var(--white);border-radius:14px;padding:2rem;width:100%;max-width:540px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,.2);}
+    .modal h3{font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--primary);margin-bottom:1.2rem;}
+    .modal label{display:block;font-size:.82rem;font-weight:600;color:var(--primary);margin-bottom:.3rem;margin-top:.9rem;}
+    .modal select,.modal textarea,.modal input[type=datetime-local],.modal input[type=text]{
+      width:100%;padding:.65rem .9rem;border:1.5px solid var(--border);border-radius:7px;
+      font-family:inherit;font-size:.9rem;outline:none;transition:border-color .2s;background:var(--white);
+    }
+    .modal select:focus,.modal textarea:focus,.modal input:focus{border-color:var(--accent);}
+    .modal textarea{resize:vertical;min-height:80px;}
+
+    /* Customer info strip */
+    .modal-info{background:var(--bg);border-radius:8px;padding:1rem;margin-bottom:.5rem;}
+    .modal-info p{font-size:.85rem;color:var(--text);margin-bottom:.3rem;line-height:1.55;}
+    .modal-info strong{color:var(--primary);}
+
+    /* Call log */
+    .call-log{border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-top:.5rem;}
+    .call-log-empty{padding:1rem;font-size:.82rem;color:var(--muted);text-align:center;background:#fafafa;}
+    .call-log-entry{padding:.85rem 1rem;border-bottom:1px solid var(--border);position:relative;}
+    .call-log-entry:last-child{border-bottom:none;}
+    .call-log-entry:nth-child(odd){background:#fdfcfb;}
+    .call-log-text{font-size:.88rem;color:var(--text);line-height:1.55;white-space:pre-wrap;}
+    .call-log-meta{font-size:.72rem;color:var(--muted);margin-top:.35rem;display:flex;align-items:center;gap:.4rem;}
+    .call-log-meta::before{content:'🕐';font-size:.65rem;}
+
+    /* Add note area */
+    .note-add-area{background:#f0f7ff;border:1.5px solid #c8dff7;border-radius:8px;padding:1rem;margin-top:.8rem;}
+    .note-add-label{font-size:.78rem;font-weight:700;color:#0969da;margin-bottom:.5rem;display:flex;align-items:center;gap:.4rem;}
+    .note-add-label::before{content:'📝';}
+    .note-save-btn{margin-top:.6rem;background:#0969da;color:var(--white);border:none;padding:.55rem 1.1rem;border-radius:6px;font-family:inherit;font-size:.85rem;font-weight:600;cursor:pointer;transition:background .2s;}
+    .note-save-btn:hover{background:#0757b5;}
+    .note-save-btn:disabled{background:#9db8d6;cursor:not-allowed;}
+
+    /* Modal action row */
+    .modal-actions{display:flex;gap:.8rem;margin-top:1.5rem;justify-content:flex-end;border-top:1px solid var(--border);padding-top:1.2rem;}
+    .modal-save{background:var(--accent);color:var(--white);border:none;padding:.65rem 1.4rem;border-radius:7px;font-family:inherit;font-size:.9rem;font-weight:600;cursor:pointer;transition:background .2s;}
+    .modal-save:hover{background:var(--accent-hover);}
+    .modal-cancel{background:var(--bg);color:var(--text);border:1px solid var(--border);padding:.65rem 1.4rem;border-radius:7px;font-family:inherit;font-size:.9rem;font-weight:600;cursor:pointer;}
+
+    /* Reminder modal */
+    .reminder-modal-header{display:flex;align-items:center;gap:.7rem;margin-bottom:1.2rem;}
+    .reminder-modal-icon{width:36px;height:36px;background:#f3e8ff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;}
+    .reminder-modal-title{font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--reminder);}
+    .reminder-customer-name{font-weight:700;color:var(--primary);}
+    .reminder-set-btn{background:var(--reminder);color:var(--white);border:none;padding:.65rem 1.4rem;border-radius:7px;font-family:inherit;font-size:.9rem;font-weight:600;cursor:pointer;transition:background .2s;}
+    .reminder-set-btn:hover{background:#6d28d9;}
+
+    /* Empty */
+    .empty{text-align:center;padding:3rem;color:var(--muted);}
+    .empty-icon{font-size:3rem;margin-bottom:.8rem;}
+    .empty p{font-size:.9rem;}
+
+    /* Toast */
+    .toast{position:fixed;bottom:1.5rem;right:1.5rem;z-index:999;background:var(--primary-dark);color:var(--white);padding:.8rem 1.4rem;border-radius:8px;font-size:.88rem;font-weight:500;box-shadow:0 8px 24px rgba(0,0,0,.2);transform:translateY(100px);opacity:0;transition:.3s ease;max-width:340px;}
+    .toast.show{transform:translateY(0);opacity:1;}
+    .toast.success{background:#1a6e35;}
+    .toast.error{background:var(--red);}
+    .toast.info{background:var(--reminder);}
+
+    .loading{text-align:center;padding:2rem;color:var(--muted);font-size:.9rem;}
+
+    @media(max-width:768px){
+      .sidebar{transform:translateX(-100%);}.main{margin-left:0;}.content{padding:1rem;}
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-screen" id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">Cover<span>Credit</span></div>
+    <p class="login-sub">Admin Dashboard — Sign in to continue</p>
+    <label>Email</label>
+    <input type="email" id="l-email" placeholder="admin@covercredit.in" autocomplete="username"/>
+    <label>Password</label>
+    <input type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password"/>
+    <button class="login-btn" onclick="doLogin()">Sign In →</button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app" id="app">
+  <aside class="sidebar">
+    <div class="sidebar-logo">Cover<span>Credit</span></div>
+    <nav class="sidebar-nav">
+      <button class="nav-item active" onclick="showPanel('dashboard')">
+        <span class="nav-icon">📊</span> Dashboard
+      </button>
+      <button class="nav-item" onclick="showPanel('bookings')">
+        <span class="nav-icon">📅</span> Bookings
+        <span id="nav-booking-badge" style="margin-left:auto;background:var(--accent);color:#fff;font-size:.68rem;padding:.1rem .45rem;border-radius:100px;font-weight:700;"></span>
+      </button>
+      <button class="nav-item" onclick="showPanel('contacts')">
+        <span class="nav-icon">📩</span> Contacts
+        <span id="nav-contact-badge" style="margin-left:auto;background:var(--accent);color:#fff;font-size:.68rem;padding:.1rem .45rem;border-radius:100px;font-weight:700;"></span>
+      </button>
+    </nav>
+    <div class="sidebar-bottom">
+      <button class="logout-btn" onclick="doLogout()">🚪 Sign Out</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <span class="topbar-title" id="panel-heading">Dashboard</span>
+      <span class="topbar-time" id="clock"></span>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div class="panel active" id="panel-dashboard">
+        <div class="stats-row" id="stats-row"><div class="loading">Loading stats…</div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+          <div>
+            <h3 style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--primary);margin-bottom:1rem;">Recent Bookings</h3>
+            <div class="table-wrap" id="recent-bookings"><div class="loading">Loading…</div></div>
+          </div>
+          <div>
+            <h3 style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--primary);margin-bottom:1rem;">Recent Contacts</h3>
+            <div class="table-wrap" id="recent-contacts"><div class="loading">Loading…</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BOOKINGS -->
+      <div class="panel" id="panel-bookings">
+        <div class="panel-header">
+          <span class="panel-title">Consultation Bookings</span>
+          <div class="controls">
+            <input class="search-input" id="booking-search" placeholder="Search name, phone…" oninput="debounce(loadBookings,400)()"/>
+            <select class="filter-select" id="booking-status" onchange="loadBookings()">
+              <option value="all">All Status</option>
+              <option value="new">New</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+              <option value="no-show">No Show</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th><th>Phone</th><th>Topic</th>
+                <th>Time Slot</th><th>Language</th>
+                <th>Notes</th><th>Status</th><th>Date</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="bookings-body"><tr><td colspan="9"><div class="loading">Loading…</div></td></tr></tbody>
+          </table>
+        </div>
+        <div class="pagination" id="bookings-pagination"></div>
+      </div>
+
+      <!-- CONTACTS -->
+      <div class="panel" id="panel-contacts">
+        <div class="panel-header">
+          <span class="panel-title">Contact Form Submissions</span>
+          <div class="controls">
+            <input class="search-input" id="contact-search" placeholder="Search name, phone…" oninput="debounce(loadContacts,400)()"/>
+            <select class="filter-select" id="contact-status" onchange="loadContacts()">
+              <option value="all">All Status</option>
+              <option value="new">New</option>
+              <option value="contacted">Contacted</option>
+              <option value="converted">Converted</option>
+              <option value="closed">Closed</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Name</th><th>Phone</th><th>Email</th><th>Interest</th><th>Status</th><th>Date</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="contacts-body"><tr><td colspan="7"><div class="loading">Loading…</div></td></tr></tbody>
+          </table>
+        </div>
+        <div class="pagination" id="contacts-pagination"></div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- ═══ EDIT MODAL ═══ -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal" id="modal" onclick="event.stopPropagation()">
+    <h3 id="modal-title">Edit Lead</h3>
+
+    <!-- Customer info -->
+    <div id="modal-info"></div>
+
+    <!-- Status -->
+    <label>Status</label>
+    <select id="modal-status"></select>
+
+    <!-- Call notes log -->
+    <label>Call Notes Log</label>
+    <div id="modal-call-log" class="call-log"></div>
+
+    <!-- Add new note -->
+    <div class="note-add-area">
+      <div class="note-add-label">Add Call Note</div>
+      <textarea id="modal-new-note" placeholder="Write what happened in this call — outcome, follow-up needed, customer concern…" rows="3"></textarea>
+      <button class="note-save-btn" id="note-save-btn" onclick="saveNote()">Save Note</button>
+    </div>
+
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeModal()">Close</button>
+      <button class="modal-save" onclick="saveEdit()">Save Status</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ REMINDER MODAL ═══ -->
+<div class="modal-overlay" id="reminder-overlay" onclick="closeReminderModal(event)">
+  <div class="modal" id="reminder-modal" onclick="event.stopPropagation()">
+    <div class="reminder-modal-header">
+      <div class="reminder-modal-icon">⏰</div>
+      <div>
+        <div class="reminder-modal-title">Set Reminder</div>
+        <div style="font-size:.8rem;color:var(--muted);margin-top:.15rem;">You'll get an email when it's time to call</div>
+      </div>
+    </div>
+
+    <div class="modal-info" id="reminder-customer-info" style="margin-bottom:1rem;"></div>
+
+    <label>Reminder Date & Time *</label>
+    <input type="datetime-local" id="reminder-datetime" style="font-size:.9rem;"/>
+    <div style="font-size:.75rem;color:var(--muted);margin-top:.3rem;">All times in IST (Indian Standard Time)</div>
+
+    <label>Note to yourself (optional)</label>
+    <textarea id="reminder-note" placeholder="e.g. Ask about health plan for family of 4, follow up on premium quote…" rows="3"></textarea>
+
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeReminderModal()">Cancel</button>
+      <button class="reminder-set-btn" onclick="setReminder()">⏰ Set Reminder</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Config ────────────────────────────────────────────────
+const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://localhost:5000/api'
+  : '/api';
+
+// ── State ─────────────────────────────────────────────────
+let token       = localStorage.getItem('cc_token') || '';
+let editType    = '';
+let editId      = '';
+let reminderId  = '';
+let currentPage = { bookings: 1, contacts: 1 };
+
+// ── On load ───────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  updateClock();
+  setInterval(updateClock, 30000);
+  if (token) verifyToken();
+  // Default datetime-local to tomorrow 10am
+  setDefaultReminderTime();
+});
+
+function updateClock() {
+  document.getElementById('clock').textContent =
+    new Date().toLocaleString('en-IN', { timeZone:'Asia/Kolkata', weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+}
+
+function setDefaultReminderTime() {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(10, 0, 0, 0);
+  // Format to datetime-local value (YYYY-MM-DDTHH:mm)
+  const local = new Date(tomorrow.getTime() - tomorrow.getTimezoneOffset() * 60000)
+    .toISOString().slice(0, 16);
+  const el = document.getElementById('reminder-datetime');
+  if (el) el.value = local;
+}
+
+// ── Auth ──────────────────────────────────────────────────
+async function verifyToken() {
+  try {
+    const r = await apiFetch('/auth/verify');
+    if (r.success) showApp();
+    else { token = ''; localStorage.removeItem('cc_token'); }
+  } catch { token = ''; localStorage.removeItem('cc_token'); }
+}
+
+async function doLogin() {
+  const email = document.getElementById('l-email').value.trim();
+  const pass  = document.getElementById('l-pass').value;
+  const errEl = document.getElementById('login-error');
+  errEl.style.display = 'none';
+  try {
+    const r = await apiFetch('/auth/login', 'POST', { email, password: pass });
+    if (r.success) {
+      token = r.token;
+      localStorage.setItem('cc_token', token);
+      showApp();
+    } else {
+      errEl.textContent = r.message;
+      errEl.style.display = 'block';
+    }
+  } catch {
+    errEl.textContent = 'Login failed. Check your credentials.';
+    errEl.style.display = 'block';
+  }
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeModal(); closeReminderModal(); }
+  if (e.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') doLogin();
+});
+
+function doLogout() {
+  token = '';
+  localStorage.removeItem('cc_token');
+  document.getElementById('app').classList.remove('show');
+  document.getElementById('login-screen').style.display = 'flex';
+}
+
+function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').classList.add('show');
+  loadDashboard();
+}
+
+// ── Navigation ────────────────────────────────────────────
+const panelTitles = { dashboard:'Dashboard', bookings:'Consultation Bookings', contacts:'Contact Submissions' };
+
+function showPanel(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.textContent.toLowerCase().includes(name)) n.classList.add('active');
+  });
+  document.getElementById('panel-heading').textContent = panelTitles[name] || name;
+  if (name === 'bookings') loadBookings();
+  if (name === 'contacts') loadContacts();
+}
+
+// ── API helper ───────────────────────────────────────────
+async function apiFetch(path, method = 'GET', body = null) {
+  const opts = {
+    method,
+    headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) },
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const res  = await fetch(API + path, opts);
+  const data = await res.json();
+  if (res.status === 401 || res.status === 403) doLogout();
+  return data;
+}
+
+// ── Dashboard ─────────────────────────────────────────────
+async function loadDashboard() {
+  const r = await apiFetch('/admin/stats');
+  if (!r.success) return;
+  const s = r.stats;
+  document.getElementById('stats-row').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Total Leads</div><div class="stat-num">${s.totalLeads}</div><div class="stat-sub">All time</div></div>
+    <div class="stat-card orange"><div class="stat-label">New Leads</div><div class="stat-num">${s.newLeads}</div><div class="stat-sub">Awaiting contact</div></div>
+    <div class="stat-card"><div class="stat-label">Bookings</div><div class="stat-num">${s.totalBookings}</div><div class="stat-sub">${s.newBookings} new</div></div>
+    <div class="stat-card green"><div class="stat-label">Contacts</div><div class="stat-num">${s.totalContacts}</div><div class="stat-sub">${s.newContacts} new</div></div>
+  `;
+  document.getElementById('nav-booking-badge').textContent = s.newBookings > 0 ? s.newBookings : '';
+  document.getElementById('nav-contact-badge').textContent = s.newContacts > 0 ? s.newContacts : '';
+  document.getElementById('recent-bookings').innerHTML = miniTable(r.recentBookings, 'booking');
+  document.getElementById('recent-contacts').innerHTML = miniTable(r.recentContacts, 'contact');
+}
+
+function miniTable(rows, type) {
+  if (!rows?.length) return '<div class="empty"><div class="empty-icon">📭</div><p>No data yet</p></div>';
+  const isB = type === 'booking';
+  const items = rows.map(r => `
+    <tr>
+      <td class="td-name">${isB ? esc(r.name) : esc(r.firstName) + ' ' + esc(r.lastName)}</td>
+      <td class="td-phone"><a href="tel:${r.phone}">${r.phone}</a></td>
+      <td><span class="badge badge-${(r.status||'new').replace('-','')}">${r.status||'new'}</span></td>
+      <td class="td-date">${fmtDate(r.createdAt)}</td>
+    </tr>`).join('');
+  return `<table><thead><tr><th>Name</th><th>Phone</th><th>Status</th><th>Date</th></tr></thead><tbody>${items}</tbody></table>`;
+}
+
+// ── Bookings ──────────────────────────────────────────────
+async function loadBookings(page = currentPage.bookings) {
+  currentPage.bookings = page;
+  const search = document.getElementById('booking-search')?.value || '';
+  const status = document.getElementById('booking-status')?.value || 'all';
+  const params = new URLSearchParams({ page, limit: 15, status, search });
+  const r = await apiFetch('/admin/bookings?' + params);
+  if (!r.success) return;
+
+  const tbody = document.getElementById('bookings-body');
+  if (!r.data.length) {
+    tbody.innerHTML = `<tr><td colspan="9"><div class="empty"><div class="empty-icon">📭</div><p>No bookings found</p></div></td></tr>`;
+    document.getElementById('bookings-pagination').innerHTML = '';
+    return;
+  }
+
+  window._bookingMap = {};
+  r.data.forEach(b => { window._bookingMap[b._id] = b; });
+
+  tbody.innerHTML = r.data.map(b => {
+    const noteCount  = Array.isArray(b.adminNotes) ? b.adminNotes.length : 0;
+    const hasReminder = b.reminder && !b.reminder.sent;
+    const reminderLabel = hasReminder
+      ? `⏰ ${fmtDate(b.reminder.scheduledAt)}`
+      : (b.reminder?.sent ? '✅ Sent' : '');
+    return `<tr>
+      <td class="td-name">${esc(b.name)}</td>
+      <td class="td-phone"><a href="tel:${b.phone}">${b.phone}</a></td>
+      <td style="max-width:190px;font-size:.82rem;">${esc(b.topic)}</td>
+      <td style="font-size:.82rem;">${esc(b.preferredTimeSlot)}</td>
+      <td style="font-size:.82rem;">${esc(b.preferredLanguage)}</td>
+      <td style="font-size:.78rem;color:${noteCount>0?'#0969da':'' };font-weight:${noteCount>0?'600':'400'}">
+        ${noteCount > 0 ? `📝 ${noteCount} note${noteCount>1?'s':''}` : '<span style="color:var(--muted)">—</span>'}
+      </td>
+      <td><span class="badge badge-${b.status.replace('-','')}">${b.status}</span></td>
+      <td class="td-date">${fmtDate(b.createdAt)}</td>
+      <td>
+        <div class="actions">
+          <a href="tel:${b.phone}" class="act-btn act-call">📞 Call</a>
+          <button class="act-btn act-edit" onclick="openEditById('booking','${b._id}')">✏️ Edit</button>
+          <button class="act-btn act-reminder ${hasReminder?'has-reminder':''}"
+            onclick="openReminderModal('${b._id}')"
+            title="${hasReminder ? 'Reminder set: '+fmtDate(b.reminder.scheduledAt) : 'Set a reminder'}">
+            ⏰${hasReminder ? ' Set' : ''}
+          </button>
+          <button class="act-btn act-delete" onclick="deleteLead('booking','${b._id}')">🗑️</button>
+        </div>
+        ${reminderLabel ? `<div style="font-size:.68rem;color:var(--reminder);margin-top:.3rem;">${reminderLabel}</div>` : ''}
+      </td>
+    </tr>`;
+  }).join('');
+
+  renderPagination('bookings-pagination', r.pagination, loadBookings);
+}
+
+// ── Contacts ──────────────────────────────────────────────
+async function loadContacts(page = currentPage.contacts) {
+  currentPage.contacts = page;
+  const search = document.getElementById('contact-search')?.value || '';
+  const status = document.getElementById('contact-status')?.value || 'all';
+  const params = new URLSearchParams({ page, limit: 15, status, search });
+  const r = await apiFetch('/admin/contacts?' + params);
+  if (!r.success) return;
+
+  const tbody = document.getElementById('contacts-body');
+  if (!r.data.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty"><div class="empty-icon">📭</div><p>No contacts found</p></div></td></tr>`;
+    document.getElementById('contacts-pagination').innerHTML = '';
+    return;
+  }
+
+  window._contactMap = {};
+  r.data.forEach(c => { window._contactMap[c._id] = c; });
+
+  tbody.innerHTML = r.data.map(c => `
+    <tr>
+      <td class="td-name">${esc(c.firstName)} ${esc(c.lastName)}</td>
+      <td class="td-phone"><a href="tel:${c.phone}">${c.phone}</a></td>
+      <td style="font-size:.82rem;">${c.email ? `<a href="mailto:${c.email}">${esc(c.email)}</a>` : '—'}</td>
+      <td style="font-size:.82rem;">${esc(c.interest)}</td>
+      <td><span class="badge badge-${c.status}">${c.status}</span></td>
+      <td class="td-date">${fmtDate(c.createdAt)}</td>
+      <td>
+        <div class="actions">
+          <a href="tel:${c.phone}" class="act-btn act-call">📞 Call</a>
+          <button class="act-btn act-edit" onclick="openEditById('contact','${c._id}')">✏️ Edit</button>
+          <button class="act-btn act-delete" onclick="deleteLead('contact','${c._id}')">🗑️</button>
+        </div>
+      </td>
+    </tr>`).join('');
+
+  renderPagination('contacts-pagination', r.pagination, loadContacts);
+}
+
+// ── Pagination ────────────────────────────────────────────
+function renderPagination(containerId, pagination, loadFn) {
+  const el = document.getElementById(containerId);
+  if (!el || pagination.pages <= 1) { if(el) el.innerHTML=''; return; }
+  let html = `<span class="page-info">Page ${pagination.page} of ${pagination.pages} (${pagination.total} total)</span>`;
+  for (let i = 1; i <= pagination.pages; i++) {
+    html += `<button class="page-btn${i===pagination.page?' active':''}" onclick="(${loadFn.name})(${i})">${i}</button>`;
+  }
+  el.innerHTML = html;
+}
+
+// ── Edit Modal ────────────────────────────────────────────
+const bookingStatuses = ['new','confirmed','completed','cancelled','no-show'];
+const contactStatuses = ['new','contacted','converted','closed'];
+
+function openEditById(type, id) {
+  const data = type === 'booking'
+    ? (window._bookingMap || {})[id]
+    : (window._contactMap || {})[id];
+  if (!data) { showToast('Could not load data. Please refresh.', 'error'); return; }
+  openEdit(type, id, data);
+}
+
+function openEdit(type, id, data) {
+  editType = type;
+  editId   = id;
+
+  document.getElementById('modal-title').textContent =
+    type === 'booking' ? '📅 Edit Booking' : '📩 Edit Contact';
+
+  const isB = type === 'booking';
+  document.getElementById('modal-info').innerHTML = `
+    <div class="modal-info">
+      <p><strong>Name:</strong> ${isB ? esc(data.name) : esc(data.firstName)+' '+esc(data.lastName)}</p>
+      <p><strong>Phone:</strong> <a href="tel:${data.phone}" style="color:var(--accent);font-weight:600;">${data.phone}</a></p>
+      ${data.email ? `<p><strong>Email:</strong> ${esc(data.email)}</p>` : ''}
+      <p><strong>${isB?'Topic':'Interest'}:</strong> ${isB ? esc(data.topic) : esc(data.interest)}</p>
+      ${isB ? `<p><strong>Slot:</strong> ${esc(data.preferredTimeSlot)} · ${esc(data.preferredLanguage)}</p>` : ''}
+      ${data.message||data.notes ? `<p><strong>Message:</strong> ${esc(data.message||data.notes)}</p>` : ''}
+    </div>`;
+
+  const statuses = type === 'booking' ? bookingStatuses : contactStatuses;
+  document.getElementById('modal-status').innerHTML =
+    statuses.map(s => `<option value="${s}"${s===data.status?' selected':''}>${s}</option>`).join('');
+
+  // Render call log
+  renderCallLog(data.adminNotes || []);
+
+  // Clear new note textarea
+  document.getElementById('modal-new-note').value = '';
+
+  // Show/hide note section — only for bookings
+  document.querySelector('.note-add-area').style.display = isB ? 'block' : 'none';
+  document.getElementById('modal-call-log').closest('div')?.previousElementSibling?.style.setProperty('display', isB ? 'block' : 'none');
+  document.querySelectorAll('.modal label')[2].style.display = isB ? 'block' : 'none';
+
+  document.getElementById('modal-overlay').classList.add('show');
+}
+
+function renderCallLog(notes) {
+  const log = document.getElementById('modal-call-log');
+  if (!notes || notes.length === 0) {
+    log.innerHTML = '<div class="call-log-empty">No call notes yet. Add your first note after this call.</div>';
+    return;
+  }
+  // Show newest first
+  const sorted = [...notes].sort((a, b) => new Date(b.addedAt) - new Date(a.addedAt));
+  log.innerHTML = sorted.map((n, i) => `
+    <div class="call-log-entry">
+      <div class="call-log-text">${esc(n.text)}</div>
+      <div class="call-log-meta">${fmtDate(n.addedAt)} IST${i === 0 ? ' &nbsp;·&nbsp; <strong style="color:var(--green)">Latest</strong>' : ''}</div>
+    </div>`).join('');
+}
+
+function closeModal(e) {
+  if (!e || e.target === document.getElementById('modal-overlay')) {
+    document.getElementById('modal-overlay').classList.remove('show');
+  }
+}
+
+// Save status only
+async function saveEdit() {
+  const status = document.getElementById('modal-status').value;
+  const path   = editType === 'booking' ? `/admin/bookings/${editId}` : `/admin/contacts/${editId}`;
+  const r      = await apiFetch(path, 'PATCH', { status });
+  if (r.success) {
+    showToast('Status updated ✓', 'success');
+    if (editType === 'booking') loadBookings();
+    else loadContacts();
+    loadDashboard();
+    // Update local map so modal reflects latest
+    if (editType === 'booking' && window._bookingMap?.[editId]) {
+      window._bookingMap[editId].status = status;
+    }
+  } else {
+    showToast(r.message || 'Update failed', 'error');
+  }
+}
+
+// Save a new call note — appends with timestamp, stays in modal
+async function saveNote() {
+  const text = document.getElementById('modal-new-note').value.trim();
+  if (!text) { showToast('Please write something before saving.', 'error'); return; }
+
+  const btn = document.getElementById('note-save-btn');
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+
+  const r = await apiFetch(`/admin/bookings/${editId}/note`, 'POST', { text });
+
+  btn.disabled = false;
+  btn.textContent = 'Save Note';
+
+  if (r.success) {
+    // Update local cache
+    if (window._bookingMap?.[editId]) {
+      window._bookingMap[editId].adminNotes = r.data.adminNotes;
+    }
+    // Re-render call log immediately
+    renderCallLog(r.data.adminNotes || []);
+    document.getElementById('modal-new-note').value = '';
+    showToast('Note saved ✓', 'success');
+    // Refresh table in background so note count updates
+    loadBookings();
+  } else {
+    showToast(r.message || 'Failed to save note.', 'error');
+  }
+}
+
+// ── Reminder Modal ────────────────────────────────────────
+function openReminderModal(bookingId) {
+  reminderId = bookingId;
+  const b = (window._bookingMap || {})[bookingId];
+  if (!b) { showToast('Could not load booking. Refresh and try again.', 'error'); return; }
+
+  document.getElementById('reminder-customer-info').innerHTML = `
+    <p style="margin:0;font-size:.88rem;">
+      <strong style="color:var(--primary)">${esc(b.name)}</strong>
+      &nbsp;·&nbsp; <a href="tel:${b.phone}" style="color:var(--accent);font-weight:600;">${b.phone}</a>
+    </p>
+    <p style="margin:.3rem 0 0;font-size:.8rem;color:var(--muted);">${esc(b.topic)}</p>
+    ${b.reminder && !b.reminder.sent
+      ? `<p style="margin:.4rem 0 0;font-size:.78rem;color:var(--reminder);">⏰ Current reminder: ${fmtDate(b.reminder.scheduledAt)} IST</p>`
+      : ''}`;
+
+  // Pre-fill note from existing reminder if any
+  document.getElementById('reminder-note').value = b.reminder?.note || '';
+
+  // Reset datetime to tomorrow 10am if no existing reminder
+  if (!b.reminder?.scheduledAt || b.reminder.sent) {
+    setDefaultReminderTime();
+  } else {
+    const d = new Date(b.reminder.scheduledAt);
+    const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    document.getElementById('reminder-datetime').value = local;
+  }
+
+  document.getElementById('reminder-overlay').classList.add('show');
+}
+
+function closeReminderModal(e) {
+  if (!e || e.target === document.getElementById('reminder-overlay')) {
+    document.getElementById('reminder-overlay').classList.remove('show');
+  }
+}
+
+async function setReminder() {
+  const datetimeVal = document.getElementById('reminder-datetime').value;
+  const note        = document.getElementById('reminder-note').value.trim();
+
+  if (!datetimeVal) { showToast('Please pick a date and time.', 'error'); return; }
+
+  // Convert local datetime-local value to ISO
+  const scheduledAt = new Date(datetimeVal).toISOString();
+
+  const btn = document.querySelector('.reminder-set-btn');
+  btn.disabled = true;
+  btn.textContent = 'Setting…';
+
+  const r = await apiFetch(`/admin/bookings/${reminderId}/reminder`, 'POST', { scheduledAt, note });
+
+  btn.disabled = false;
+  btn.textContent = '⏰ Set Reminder';
+
+  if (r.success) {
+    // Update local cache
+    if (window._bookingMap?.[reminderId]) {
+      window._bookingMap[reminderId].reminder = r.data.reminder;
+    }
+    closeReminderModal();
+    showToast('Reminder set! You\'ll get an email when it\'s due. ✓', 'success');
+    loadBookings(); // refresh table to show reminder badge
+  } else {
+    showToast(r.message || 'Failed to set reminder.', 'error');
+  }
+}
+
+// ── Delete ────────────────────────────────────────────────
+async function deleteLead(type, id) {
+  if (!confirm('Delete this lead? This cannot be undone.')) return;
+  const path = type === 'booking' ? `/admin/bookings/${id}` : `/admin/contacts/${id}`;
+  const r    = await apiFetch(path, 'DELETE');
+  if (r.success) {
+    showToast('Deleted ✓', 'success');
+    if (type === 'booking') loadBookings();
+    else loadContacts();
+    loadDashboard();
+  } else {
+    showToast('Delete failed', 'error');
+  }
+}
+
+// ── Toast ─────────────────────────────────────────────────
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className   = 'toast show ' + type;
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ── Helpers ───────────────────────────────────────────────
+function fmtDate(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleString('en-IN', {
+    timeZone:'Asia/Kolkata', day:'numeric', month:'short',
+    hour:'2-digit', minute:'2-digit',
+  });
+}
+
+function esc(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function debounce(fn, ms) {
+  let timer;
+  return (...args) => { clearTimeout(timer); timer = setTimeout(() => fn(...args), ms); };
+}
+</script>
+</body>
+</html>
