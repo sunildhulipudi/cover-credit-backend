@@ -3,7 +3,6 @@
 // Stores data from the Book Consultation page (wizard form)
 // Updated to match new 4-step department-based form
 // ============================================================
-
 const mongoose = require('mongoose');
 
 const bookingSchema = new mongoose.Schema(
@@ -43,12 +42,6 @@ const bookingSchema = new mongoose.Schema(
     },
 
     // ── Step 3: Department-specific details ───────────────
-    // Flexible object — structure varies per department:
-    // LOAN:       { loanType, loanAmount, employmentType, monthlyIncome, existingLoans }
-    // HEALTH:     { coverage, sumInsured, existingPolicy, preExisting }
-    // LIFE:       { ageGroup, smoker, planType, coverageAmount, dependants }
-    // BIKE/CAR:   { regNumber, makeModel, year, currentInsurer, coverageType, addOns }
-    // COMMERCIAL: { vehicleType, numberOfVehicles, goodsCarrierType, currentInsurer, coverageType }
     details: {
       type: mongoose.Schema.Types.Mixed,
       default: {},
@@ -82,11 +75,34 @@ const bookingSchema = new mongoose.Schema(
       enum: ['new', 'confirmed', 'completed', 'cancelled', 'no-show'],
       default: 'new',
     },
-    scheduledAt: { type: Date, default: null },
-    adminNotes:  { type: String, default: '' },
-    source:      { type: String, default: 'book-form' },
-    referredFrom:{ type: String, default: '' },
-    ipAddress:   { type: String, default: '' },
+    scheduledAt:  { type: Date,   default: null },
+    adminNotes:   { type: String, default: '' },   // kept for backward compatibility
+    source:       { type: String, default: 'book-form' },
+    referredFrom: { type: String, default: '' },
+    ipAddress:    { type: String, default: '' },
+
+    // ── Call notes log ─────────────────────────────────────
+    // Each entry is added when admin saves a note after a call.
+    // Text + timestamp are stored permanently — never overwritten.
+    callNotes: {
+      type: [
+        {
+          text:    { type: String, required: true, trim: true, maxlength: [2000, 'Note too long'] },
+          addedAt: { type: Date, default: Date.now },
+          _id:     false,
+        },
+      ],
+      default: [],
+    },
+
+    // ── Reminder ───────────────────────────────────────────
+    // One active reminder per booking. Replaced each time admin sets a new one.
+    reminder: {
+      scheduledAt: { type: Date,    default: null  },
+      note:        { type: String,  default: ''    },
+      sent:        { type: Boolean, default: false },
+      sentAt:      { type: Date,    default: null  },
+    },
   },
   { timestamps: true }
 );
@@ -95,5 +111,7 @@ bookingSchema.index({ createdAt: -1 });
 bookingSchema.index({ status: 1 });
 bookingSchema.index({ department: 1 });
 bookingSchema.index({ phone: 1 });
+// Fast lookup for reminder cron — only non-null, unsent, due reminders
+bookingSchema.index({ 'reminder.sent': 1, 'reminder.scheduledAt': 1 });
 
 module.exports = mongoose.model('Booking', bookingSchema);
