@@ -20,11 +20,9 @@ app.use(helmet({
 
 app.use(cors({
   origin: [
-    process.env.FRONTEND_URL || 'https://gleaming-rabanadas-c36160.netlify.app',
-    'https://gleaming-rabanadas-c36160.netlify.app',  // Netlify frontend
-    'http://127.0.0.1:5500',                           // VS Code Live Server
+    process.env.FRONTEND_URL || 'http://localhost:3000',
+    'http://127.0.0.1:5500',      // VS Code Live Server (local dev)
     'http://localhost:5500',
-    'http://localhost:3000',
   ],
   credentials: true,
 }));
@@ -57,6 +55,34 @@ mongoose.connect(process.env.MONGODB_URI)
     console.error('❌  MongoDB connection error:', err.message);
     process.exit(1);
   });
+
+// ── Reminder Checker (runs every 60 seconds) ──────────────
+// Finds bookings with unsent reminders that are now due, fires email
+mongoose.connection.once('open', () => {
+  const Booking = require('./models/Booking');
+  const { sendReminderEmail } = require('./utils/email');
+
+  setInterval(async () => {
+    try {
+      const dueSoon = await Booking.find({
+        'reminder.sent':        false,
+        'reminder.scheduledAt': { $lte: new Date() },
+      });
+
+      for (const booking of dueSoon) {
+        await sendReminderEmail(booking, 'due');
+        booking.reminder.sent  = true;
+        booking.reminder.sentAt = new Date();
+        await booking.save();
+        console.log(`⏰  Reminder fired for: ${booking.name} (${booking._id})`);
+      }
+    } catch (err) {
+      console.error('Reminder checker error:', err.message);
+    }
+  }, 60 * 1000); // every 60 seconds
+
+  console.log('⏰  Reminder checker started (checks every 60s)');
+});
 
 // ── API Routes ────────────────────────────────────────────
 app.use('/api/contact',  formLimiter, require('./routes/contact'));
