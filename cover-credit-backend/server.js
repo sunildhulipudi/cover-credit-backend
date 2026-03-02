@@ -85,9 +85,10 @@ function startReminderChecker() {
 // ── API Routes ────────────────────────────────────────────
 app.use('/api/contact',    formLimiter, require('./routes/contact'));
 app.use('/api/book',       formLimiter, require('./routes/book'));
-app.use('/api/admin/blog', require('./routes/adminBlog'));   // ← NEW: must be before /api/admin
+app.use('/api/admin/blog', require('./routes/adminBlog'));   // ← must be before /api/admin
 app.use('/api/admin',      require('./routes/admin'));
-app.use('/api/blog',       require('./routes/blog'));         // ← NEW: public blog
+app.use('/api/blog',       require('./routes/blog'));
+app.use('/api/track',      require('./routes/track'));        // ← site analytics tracking
 app.use('/api/auth',       require('./routes/auth'));
 
 // ── Health Check ─────────────────────────────────────────
