@@ -1,9 +1,10 @@
 // ============================================================
 // ROUTE: /api/blog  — PUBLIC
 // ============================================================
-const express  = require('express');
-const router   = express.Router();
-const BlogPost = require('../models/BlogPost');
+const express   = require('express');
+const router    = express.Router();
+const BlogPost  = require('../models/BlogPost');
+const BlogView  = require('../models/BlogView');
 
 // GET /api/blog — published, non-expired posts
 router.get('/', async (req, res) => {
@@ -25,22 +26,41 @@ router.get('/', async (req, res) => {
       BlogPost.countDocuments(filter),
     ]);
 
-    res.json({ success: true, data: posts,
-      pagination: { page, limit, total, pages: Math.ceil(total / limit) } });
+    res.json({
+      success: true, data: posts,
+      pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+    });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Failed to load posts.' });
   }
 });
 
-// GET /api/blog/:slug — single post + increment views
+// GET /api/blog/:slug — single post + track view with source & device
 router.get('/:slug', async (req, res) => {
   try {
     const now  = new Date();
     const post = await BlogPost.findOne({
-      slug: req.params.slug, status: 'published', publishedAt: { $lte: now },
+      slug: req.params.slug,
+      status: 'published',
+      publishedAt: { $lte: now },
     }).lean();
+
     if (!post) return res.status(404).json({ success: false, message: 'Post not found.' });
-    BlogPost.findByIdAndUpdate(post._id, { $inc: { views: 1 } }).exec();
+
+    // Track view — fire and forget, never blocks response
+    setImmediate(async () => {
+      try {
+        const referer = req.headers['referer'] || req.headers['referrer'] || '';
+        const ua      = req.headers['user-agent'] || '';
+        const source  = BlogView.detectSource(referer);
+        const device  = BlogView.detectDevice(ua);
+        await Promise.all([
+          BlogView.create({ postId: post._id, slug: post.slug, source, device, referrer: referer.slice(0,300) }),
+          BlogPost.findByIdAndUpdate(post._id, { $inc: { views: 1 } }),
+        ]);
+      } catch (e) { console.error('View tracking error:', e.message); }
+    });
+
     res.json({ success: true, data: post });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Failed to load post.' });
