@@ -1,10 +1,11 @@
 // ============================================================
 // ROUTE: /api/admin/blog  — PROTECTED
 // ============================================================
-const express  = require('express');
-const router   = express.Router();
-const auth     = require('../middleware/auth');
-const BlogPost = require('../models/BlogPost');
+const express   = require('express');
+const router    = express.Router();
+const auth      = require('../middleware/auth');
+const BlogPost  = require('../models/BlogPost');
+const BlogView  = require('../models/BlogView');
 
 router.use(auth);
 
@@ -112,6 +113,38 @@ router.delete('/:id', async (req, res) => {
     res.json({ success: true, message: 'Post deleted.' });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Failed to delete post.' });
+  }
+});
+
+// GET /api/admin/blog/:id/views — view breakdown for a post
+router.get('/:id/views', async (req, res) => {
+  try {
+    const postId = req.params.id;
+
+    const [bySource, byDevice, recent, total] = await Promise.all([
+      // Group by source
+      BlogView.aggregate([
+        { $match: { postId: require('mongoose').Types.ObjectId.createFromHexString(postId) } },
+        { $group: { _id: '$source', count: { $sum: 1 } } },
+        { $sort:  { count: -1 } },
+      ]),
+      // Group by device
+      BlogView.aggregate([
+        { $match: { postId: require('mongoose').Types.ObjectId.createFromHexString(postId) } },
+        { $group: { _id: '$device', count: { $sum: 1 } } },
+        { $sort:  { count: -1 } },
+      ]),
+      // 10 most recent views
+      BlogView.find({ postId })
+        .sort({ createdAt: -1 }).limit(10)
+        .select('source device createdAt referrer').lean(),
+      // Total count
+      BlogView.countDocuments({ postId }),
+    ]);
+
+    res.json({ success: true, data: { total, bySource, byDevice, recent } });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to load view stats.' });
   }
 });
 
