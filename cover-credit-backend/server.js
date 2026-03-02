@@ -14,9 +14,7 @@ const path       = require('path');
 const app = express();
 
 // ── Security & Middleware ──────────────────────────────────
-app.use(helmet({
-  contentSecurityPolicy: false,   // allow admin panel inline styles
-}));
+app.use(helmet({ contentSecurityPolicy: false }));
 
 app.use(cors({
   origin: [
@@ -35,18 +33,15 @@ app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
 // ── Global Rate Limiter ────────────────────────────────────
 const globalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
+  windowMs: 15 * 60 * 1000, max: 100,
   message: { success: false, message: 'Too many requests. Please try again later.' },
-  standardHeaders: true,
-  legacyHeaders: false,
+  standardHeaders: true, legacyHeaders: false,
 });
 app.use('/api/', globalLimiter);
 
 // ── Stricter limiter for form submissions ──────────────────
 const formLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000,
-  max: 10,
+  windowMs: 60 * 60 * 1000, max: 10,
   message: { success: false, message: 'Too many submissions. Please try again in an hour.' },
 });
 
@@ -62,21 +57,16 @@ mongoose.connect(process.env.MONGODB_URI)
   });
 
 // ── Reminder Checker ──────────────────────────────────────
-// Runs every 60 seconds after DB is connected.
-// Finds bookings with unsent reminders whose time has passed,
-// fires the "due" email, then marks them as sent so they never fire twice.
 function startReminderChecker() {
   const Booking = require('./models/Booking');
   const { sendReminderEmail } = require('./utils/email');
 
   setInterval(async () => {
     try {
-      // Only query if reminder.scheduledAt is set and in the past and not yet sent
       const due = await Booking.find({
         'reminder.sent':        false,
         'reminder.scheduledAt': { $ne: null, $lte: new Date() },
       });
-
       for (const booking of due) {
         await sendReminderEmail(booking, 'due');
         booking.reminder.sent   = true;
@@ -93,10 +83,12 @@ function startReminderChecker() {
 }
 
 // ── API Routes ────────────────────────────────────────────
-app.use('/api/contact',  formLimiter, require('./routes/contact'));
-app.use('/api/book',     formLimiter, require('./routes/book'));
-app.use('/api/admin',    require('./routes/admin'));
-app.use('/api/auth',     require('./routes/auth'));
+app.use('/api/contact',    formLimiter, require('./routes/contact'));
+app.use('/api/book',       formLimiter, require('./routes/book'));
+app.use('/api/admin/blog', require('./routes/adminBlog'));   // ← NEW: must be before /api/admin
+app.use('/api/admin',      require('./routes/admin'));
+app.use('/api/blog',       require('./routes/blog'));         // ← NEW: public blog
+app.use('/api/auth',       require('./routes/auth'));
 
 // ── Health Check ─────────────────────────────────────────
 app.get('/api/health', (req, res) => {
