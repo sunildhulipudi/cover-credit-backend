@@ -313,9 +313,37 @@
     /* Cover image preview */
     .cover-preview{margin-top:.5rem;border-radius:8px;overflow:hidden;height:120px;
       background:var(--bg);border:1px solid var(--border);display:none;
-      align-items:center;justify-content:center;}
+      align-items:center;justify-content:center;position:relative;}
     .cover-preview.show{display:flex;}
     .cover-preview img{width:100%;height:100%;object-fit:cover;}
+    .cover-preview-remove{position:absolute;top:.4rem;right:.4rem;
+      background:rgba(0,0,0,.55);color:#fff;border:none;border-radius:50%;
+      width:22px;height:22px;font-size:.7rem;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;transition:background .2s;}
+    .cover-preview-remove:hover{background:var(--red);}
+
+    /* Image upload zone */
+    .img-upload-tabs{display:flex;gap:0;margin-bottom:.6rem;border:1.5px solid var(--border);border-radius:7px;overflow:hidden;}
+    .img-tab{flex:1;padding:.5rem;font-size:.78rem;font-weight:600;background:var(--bg);
+      border:none;font-family:inherit;cursor:pointer;color:var(--muted);transition:background .15s,color .15s;}
+    .img-tab.active{background:var(--primary);color:#fff;}
+    .img-tab-panel{display:none;}
+    .img-tab-panel.active{display:block;}
+    .img-dropzone{
+      border:2px dashed var(--border);border-radius:7px;padding:1.4rem 1rem;
+      text-align:center;cursor:pointer;transition:border-color .2s,background .2s;
+      background:var(--bg);position:relative;
+    }
+    .img-dropzone:hover,.img-dropzone.drag{border-color:var(--accent);background:#fff8f5;}
+    .img-dropzone input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+    .img-dropzone-ico{font-size:1.6rem;margin-bottom:.4rem;}
+    .img-dropzone-txt{font-size:.8rem;color:var(--muted);}
+    .img-dropzone-txt strong{color:var(--accent);}
+    .img-dropzone-sub{font-size:.7rem;color:var(--muted);margin-top:.2rem;}
+    .img-upload-bar{height:5px;background:var(--bg);border-radius:100px;overflow:hidden;margin-top:.5rem;display:none;}
+    .img-upload-bar.show{display:block;}
+    .img-upload-fill{height:100%;width:0;background:var(--accent);border-radius:100px;transition:width .3s;}
+    .img-upload-status{font-size:.75rem;margin-top:.35rem;color:var(--muted);min-height:1.1rem;}
 
     /* Category colour dots in blog table */
     .cat-dot{display:inline-flex;align-items:center;gap:.35rem;font-size:.8rem;}
@@ -350,6 +378,30 @@
     .toast.success{background:#1a6e35;}
     .toast.error{background:var(--red);}
     .toast.info{background:var(--purple);}
+
+    /* ── VIEWS BREAKDOWN MODAL ── */
+    .views-modal{background:var(--white);border-radius:14px;padding:0;width:100%;
+      max-width:600px;max-height:88vh;overflow:hidden;display:flex;flex-direction:column;
+      box-shadow:0 24px 80px rgba(0,0,0,.25);}
+    .views-modal-head{padding:1.3rem 1.8rem;border-bottom:1px solid var(--border);
+      display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+    .views-modal-head h3{font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--primary);}
+    .views-modal-body{flex:1;overflow-y:auto;padding:1.5rem 1.8rem;}
+    .views-total{text-align:center;margin-bottom:1.5rem;}
+    .views-total-num{font-family:'Playfair Display',serif;font-size:3rem;color:var(--primary);line-height:1;}
+    .views-total-lbl{font-size:.75rem;color:var(--muted);margin-top:.2rem;}
+    .views-section-title{font-size:.65rem;font-weight:700;text-transform:uppercase;
+      letter-spacing:1.5px;color:var(--muted);margin-bottom:.8rem;margin-top:1.4rem;}
+    .views-bar-row{display:flex;align-items:center;gap:.8rem;margin-bottom:.6rem;}
+    .views-bar-label{font-size:.8rem;font-weight:600;color:var(--text);width:80px;flex-shrink:0;
+      display:flex;align-items:center;gap:.35rem;}
+    .views-bar-track{flex:1;height:8px;background:var(--bg);border-radius:100px;overflow:hidden;}
+    .views-bar-fill{height:100%;border-radius:100px;background:var(--accent);transition:width .6s ease;}
+    .views-bar-count{font-size:.78rem;color:var(--muted);width:36px;text-align:right;flex-shrink:0;}
+    .views-recent-row{display:flex;align-items:center;justify-content:space-between;
+      padding:.6rem 0;border-bottom:1px solid var(--border);font-size:.8rem;}
+    .views-recent-row:last-child{border-bottom:none;}
+    .views-source-icon{font-size:1rem;width:20px;text-align:center;}
 
     .loading{text-align:center;padding:2rem;color:var(--muted);font-size:.9rem;}
 
@@ -658,13 +710,42 @@
           <span class="form-hint" id="excerpt-count">0 / 400</span>
         </div>
 
-        <!-- Cover image -->
+        <!-- Cover image — Upload or URL -->
         <div class="form-group form-full">
-          <label>Cover Image URL <span style="font-weight:400;color:var(--muted);">(Unsplash or your CDN link)</span></label>
-          <input type="url" id="blog-cover" placeholder="https://images.unsplash.com/…" oninput="previewCover()"/>
+          <label>Cover Image <span style="font-weight:400;color:var(--muted);">(upload a file or paste a URL)</span></label>
+
+          <!-- Tabs -->
+          <div class="img-upload-tabs">
+            <button type="button" class="img-tab active" onclick="switchImgTab('upload')">📁 Upload File</button>
+            <button type="button" class="img-tab"        onclick="switchImgTab('url')">🔗 Paste URL / CDN</button>
+          </div>
+
+          <!-- Upload panel -->
+          <div class="img-tab-panel active" id="img-panel-upload">
+            <div class="img-dropzone" id="img-dropzone"
+              ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+              <input type="file" id="blog-cover-file" accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
+                onchange="handleFileSelect(event)"/>
+              <div class="img-dropzone-ico">🖼️</div>
+              <div class="img-dropzone-txt"><strong>Click to browse</strong> or drag & drop</div>
+              <div class="img-dropzone-sub">JPG, PNG, WEBP, GIF · Max 5 MB</div>
+            </div>
+            <div class="img-upload-bar" id="img-upload-bar"><div class="img-upload-fill" id="img-upload-fill"></div></div>
+            <div class="img-upload-status" id="img-upload-status"></div>
+          </div>
+
+          <!-- URL panel -->
+          <div class="img-tab-panel" id="img-panel-url">
+            <input type="url" id="blog-cover" placeholder="https://images.unsplash.com/… or your CDN URL" oninput="previewCover()"/>
+          </div>
+
+          <!-- Shared preview -->
           <div class="cover-preview" id="cover-preview">
             <img id="cover-preview-img" src="" alt="Cover preview"/>
+            <button type="button" class="cover-preview-remove" onclick="removeCoverImage()" title="Remove image">✕</button>
           </div>
+          <!-- Hidden field that stores final URL regardless of method -->
+          <input type="hidden" id="blog-cover-url"/>
         </div>
 
         <!-- Tags -->
@@ -723,6 +804,19 @@
           Publish Post
         </button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ VIEWS BREAKDOWN MODAL ═══ -->
+<div class="modal-overlay" id="views-overlay" onclick="closeViewsModal(event)">
+  <div class="views-modal">
+    <div class="views-modal-head">
+      <h3>👁 View Analytics</h3>
+      <button class="blog-modal-close" onclick="closeViewsModal()">✕</button>
+    </div>
+    <div class="views-modal-body" id="views-modal-body">
+      <div class="loading">Loading analytics…</div>
     </div>
   </div>
 </div>
@@ -817,7 +911,7 @@ async function doLogin() {
 }
 
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { closeModal(); closeReminderModal(); closeBlogModal(); }
+  if (e.key === 'Escape') { closeModal(); closeReminderModal(); closeBlogModal(); closeViewsModal(); }
   if (e.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') doLogin();
 });
 
@@ -1074,7 +1168,12 @@ async function loadBlog(page=currentPage.blog) {
       <td><span class="cat-dot cat-${p.category}">${cat.icon} ${cat.label}</span></td>
       <td style="font-size:.8rem;">${esc(p.author||'—')}</td>
       <td>${statusBadge}</td>
-      <td style="font-size:.82rem;color:var(--muted);">${(p.views||0).toLocaleString()}</td>
+      <td style="font-size:.82rem;color:var(--muted);">
+        <button onclick="openViewsModal('${p._id}','${esc(p.title)}')" 
+          style="background:none;border:none;cursor:pointer;font-size:.82rem;color:var(--blue);font-weight:700;padding:0;text-decoration:underline;font-family:inherit;">
+          👁 ${(p.views||0).toLocaleString()}
+        </button>
+      </td>
       <td class="td-date">${p.publishedAt?fmtDate(p.publishedAt):'<span style="color:var(--muted);">Not set</span>'}</td>
       <td>${expiryCell}</td>
       <td>
@@ -1461,6 +1560,93 @@ function showToast(msg, type='') {
   const t = document.getElementById('toast');
   t.textContent=msg; t.className='toast show '+type;
   setTimeout(()=>t.classList.remove('show'),3200);
+}
+
+// ══════════════════════════════════════════
+// ── VIEWS BREAKDOWN MODAL ────────────────
+// ══════════════════════════════════════════
+
+const SOURCE_META = {
+  google:    { icon:'🔍', label:'Google Search'  },
+  whatsapp:  { icon:'💬', label:'WhatsApp'       },
+  facebook:  { icon:'📘', label:'Facebook'       },
+  instagram: { icon:'📸', label:'Instagram'      },
+  telegram:  { icon:'✈️', label:'Telegram'       },
+  twitter:   { icon:'🐦', label:'Twitter / X'   },
+  direct:    { icon:'🔗', label:'Direct / Link'  },
+  other:     { icon:'🌐', label:'Other'           },
+};
+
+const DEVICE_META = {
+  mobile:  { icon:'📱', label:'Mobile'  },
+  desktop: { icon:'🖥️', label:'Desktop' },
+  tablet:  { icon:'📋', label:'Tablet'  },
+};
+
+async function openViewsModal(postId, title) {
+  document.getElementById('views-overlay').classList.add('show');
+  document.getElementById('views-modal-body').innerHTML = '<div class="loading">Loading analytics…</div>';
+  document.querySelector('#views-overlay .views-modal-head h3').textContent = `👁 Views — ${title.slice(0,40)}${title.length>40?'…':''}`;
+
+  const r = await apiFetch(`/admin/blog/${postId}/views`);
+  if (!r.success) {
+    document.getElementById('views-modal-body').innerHTML = '<div class="loading">Could not load analytics.</div>';
+    return;
+  }
+
+  const { total, bySource, byDevice, recent } = r.data;
+  const maxSource = bySource[0]?.count || 1;
+  const maxDevice = byDevice[0]?.count || 1;
+
+  document.getElementById('views-modal-body').innerHTML = `
+    <!-- Total -->
+    <div class="views-total">
+      <div class="views-total-num">${total.toLocaleString()}</div>
+      <div class="views-total-lbl">Total Views Tracked</div>
+    </div>
+
+    <!-- By Source -->
+    <div class="views-section-title">Traffic Source</div>
+    ${bySource.length ? bySource.map(s => {
+      const m = SOURCE_META[s._id] || { icon:'🌐', label: s._id };
+      const pct = Math.round((s.count / maxSource) * 100);
+      return `<div class="views-bar-row">
+        <div class="views-bar-label"><span>${m.icon}</span>${m.label}</div>
+        <div class="views-bar-track"><div class="views-bar-fill" style="width:${pct}%"></div></div>
+        <div class="views-bar-count">${s.count}</div>
+      </div>`;
+    }).join('') : '<div style="font-size:.82rem;color:var(--muted);">No source data yet.</div>'}
+
+    <!-- By Device -->
+    <div class="views-section-title">Device Type</div>
+    ${byDevice.length ? byDevice.map(d => {
+      const m = DEVICE_META[d._id] || { icon:'📱', label: d._id };
+      const pct = Math.round((d.count / maxDevice) * 100);
+      return `<div class="views-bar-row">
+        <div class="views-bar-label"><span>${m.icon}</span>${m.label}</div>
+        <div class="views-bar-track"><div class="views-bar-fill" style="width:${pct}%;background:var(--blue)"></div></div>
+        <div class="views-bar-count">${d.count}</div>
+      </div>`;
+    }).join('') : '<div style="font-size:.82rem;color:var(--muted);">No device data yet.</div>'}
+
+    <!-- Recent views -->
+    <div class="views-section-title">Recent Views</div>
+    ${recent.length ? recent.map(v => {
+      const s = SOURCE_META[v.source] || { icon:'🌐', label: v.source };
+      const d = DEVICE_META[v.device] || { icon:'📱', label: v.device };
+      return `<div class="views-recent-row">
+        <span>${s.icon} ${s.label}</span>
+        <span style="color:var(--muted);">${d.icon} ${d.label}</span>
+        <span style="color:var(--muted);font-size:.74rem;">${fmtDate(v.createdAt)}</span>
+      </div>`;
+    }).join('') : '<div style="font-size:.82rem;color:var(--muted);">No views recorded yet.</div>'}
+  `;
+}
+
+function closeViewsModal(e) {
+  if (!e || e.target === document.getElementById('views-overlay')) {
+    document.getElementById('views-overlay').classList.remove('show');
+  }
 }
 
 // ── Helpers ───────────────────────────────────────────────
