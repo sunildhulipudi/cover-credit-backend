@@ -1706,23 +1706,6 @@ function showToast(msg, type='') {
 // ── VIEWS BREAKDOWN MODAL ────────────────
 // ══════════════════════════════════════════
 
-const SOURCE_META = {
-  google:    { icon:'🔍', label:'Google Search'  },
-  whatsapp:  { icon:'💬', label:'WhatsApp'       },
-  facebook:  { icon:'📘', label:'Facebook'       },
-  instagram: { icon:'📸', label:'Instagram'      },
-  telegram:  { icon:'✈️', label:'Telegram'       },
-  twitter:   { icon:'🐦', label:'Twitter / X'   },
-  direct:    { icon:'🔗', label:'Direct / Link'  },
-  other:     { icon:'🌐', label:'Other'           },
-};
-
-const DEVICE_META = {
-  mobile:  { icon:'📱', label:'Mobile'  },
-  desktop: { icon:'🖥️', label:'Desktop' },
-  tablet:  { icon:'📋', label:'Tablet'  },
-};
-
 async function openViewsModal(postId, title) {
   document.getElementById('views-overlay').classList.add('show');
   document.getElementById('views-modal-body').innerHTML = '<div class="loading">Loading analytics…</div>';
