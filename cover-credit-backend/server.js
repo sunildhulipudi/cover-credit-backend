@@ -18,6 +18,8 @@ app.use(helmet({ contentSecurityPolicy: false }));
 
 app.use(cors({
   origin: [
+    'https://covercredit.in',
+    'https://www.covercredit.in',
     process.env.FRONTEND_URL || 'https://gleaming-rabanadas-c36160.netlify.app',
     'https://gleaming-rabanadas-c36160.netlify.app',
     'http://127.0.0.1:5500',
