@@ -1,32 +1,40 @@
 // ============================================================
 // ROUTE: /api/track  — PUBLIC
-// Receives page view pings from frontend pages
-// Wire in server.js: app.use('/api/track', require('./routes/track'));
 // ============================================================
 const express  = require('express');
 const router   = express.Router();
 const PageView = require('../models/PageView');
 
-// POST /api/track
-router.post('/', async (req, res) => {
-  // Always respond immediately — never block the visitor
-  res.json({ ok: true });
+const VALID_SOURCES = ['google','whatsapp','facebook','instagram','linkedin','telegram','twitter','youtube','direct','other'];
 
-  // Process async after response sent
+// POST /api/track — receive ping from frontend
+router.post('/', async (req, res) => {
+  res.json({ ok: true }); // always respond immediately
+
   setImmediate(async () => {
     try {
-      const { page, path } = req.body;
+      const { page, path, source, device, utmMedium, utmCampaign, referrer } = req.body;
       if (!page) return;
 
-      const referer = req.headers['referer'] || req.headers['referrer'] || req.body.referrer || '';
-      const ua      = req.headers['user-agent'] || '';
+      // Frontend UTM/detection wins; fallback to server-side referer detection
+      const referer   = referrer || req.headers['referer'] || req.headers['referrer'] || '';
+      const ua        = req.headers['user-agent'] || '';
+      const rawSource = (source || '').toLowerCase().trim();
+      const finalSource = VALID_SOURCES.includes(rawSource)
+        ? rawSource
+        : PageView.detectSource(referer);
+      const finalDevice = ['mobile','desktop','tablet'].includes(device)
+        ? device
+        : PageView.detectDevice(ua);
 
       await PageView.create({
-        page:     String(page).slice(0, 100),
-        path:     String(path || '').slice(0, 200),
-        source:   PageView.detectSource(referer),
-        device:   PageView.detectDevice(ua),
-        referrer: referer.slice(0, 300),
+        page:        String(page).slice(0, 100),
+        path:        String(path || '').slice(0, 200),
+        source:      finalSource,
+        device:      finalDevice,
+        utmMedium:   String(utmMedium   || '').slice(0, 100),
+        utmCampaign: String(utmCampaign || '').slice(0, 100),
+        referrer:    referer.slice(0, 300),
       });
     } catch (e) {
       console.error('Track error:', e.message);
@@ -34,38 +42,28 @@ router.post('/', async (req, res) => {
   });
 });
 
-// GET /api/track/stats — admin use (called from adminAnalytics route)
-// Returns summary stats for the admin panel
+// GET /api/track/stats — admin analytics
 router.get('/stats', async (req, res) => {
   try {
-    const days = parseInt(req.query.days) || 30;
+    const days = Math.min(365, parseInt(req.query.days) || 30);
     const from = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
-    const [
-      totalViews,
-      bySource,
-      byDevice,
-      byPage,
-      byDay,
-    ] = await Promise.all([
-      // Total in period
+    const [totalViews, bySource, byDevice, byPage, byDay, byCampaign] = await Promise.all([
+
       PageView.countDocuments({ createdAt: { $gte: from } }),
 
-      // By source
       PageView.aggregate([
         { $match: { createdAt: { $gte: from } } },
         { $group: { _id: '$source', count: { $sum: 1 } } },
         { $sort: { count: -1 } },
       ]),
 
-      // By device
       PageView.aggregate([
         { $match: { createdAt: { $gte: from } } },
         { $group: { _id: '$device', count: { $sum: 1 } } },
         { $sort: { count: -1 } },
       ]),
 
-      // By page (top 10)
       PageView.aggregate([
         { $match: { createdAt: { $gte: from } } },
         { $group: { _id: '$page', count: { $sum: 1 } } },
@@ -73,23 +71,28 @@ router.get('/stats', async (req, res) => {
         { $limit: 10 },
       ]),
 
-      // Daily views for chart (last 14 days)
+      // Daily for last 14 days (for sparkline)
       PageView.aggregate([
-        { $match: { createdAt: { $gte: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000) } } },
-        {
-          $group: {
-            _id: {
-              $dateToString: { format: '%Y-%m-%d', date: '$createdAt', timezone: 'Asia/Kolkata' }
-            },
-            count: { $sum: 1 }
-          }
-        },
+        { $match: { createdAt: { $gte: new Date(Date.now() - 14 * 86400000) } } },
+        { $group: {
+            _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt', timezone: 'Asia/Kolkata' } },
+            count: { $sum: 1 },
+        }},
         { $sort: { _id: 1 } },
+      ]),
+
+      // UTM campaigns (top 5)
+      PageView.aggregate([
+        { $match: { createdAt: { $gte: from }, utmCampaign: { $ne: '' } } },
+        { $group: { _id: { campaign: '$utmCampaign', source: '$source' }, count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+        { $limit: 5 },
       ]),
     ]);
 
-    res.json({ success: true, data: { totalViews, bySource, byDevice, byPage, byDay, days } });
+    res.json({ success: true, data: { totalViews, bySource, byDevice, byPage, byDay, byCampaign, days } });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ success: false, message: 'Failed to load stats.' });
   }
 });
