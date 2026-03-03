@@ -636,10 +636,70 @@
       <div class="panel" id="panel-analytics">
         <div class="panel-header">
           <span class="panel-title">Site Analytics</span>
-          <div class="days-filter" id="days-filter">
-            <button class="day-btn" onclick="loadAnalytics(7)"  data-days="7">7 Days</button>
-            <button class="day-btn active" onclick="loadAnalytics(30)" data-days="30">30 Days</button>
-            <button class="day-btn" onclick="loadAnalytics(90)" data-days="90">90 Days</button>
+          <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;">
+            <div class="days-filter" id="days-filter">
+              <button class="day-btn" onclick="loadAnalytics(7)"  data-days="7">7 Days</button>
+              <button class="day-btn active" onclick="loadAnalytics(30)" data-days="30">30 Days</button>
+              <button class="day-btn" onclick="loadAnalytics(90)" data-days="90">90 Days</button>
+            </div>
+            <button class="btn-primary" onclick="toggleUtmBuilder()" style="background:var(--purple);">🔗 UTM Link Builder</button>
+          </div>
+        </div>
+
+        <!-- UTM Link Builder (hidden by default) -->
+        <div id="utm-builder" style="display:none;background:var(--white);border:1.5px solid var(--purple);border-radius:12px;padding:1.4rem;margin-bottom:1.4rem;">
+          <div style="font-family:'Playfair Display',serif;font-size:1rem;color:var(--purple);margin-bottom:1rem;font-weight:700;">
+            🔗 UTM Link Builder — Create trackable links to share
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+            <div>
+              <label style="font-size:.78rem;font-weight:600;color:var(--primary);display:block;margin-bottom:.3rem;">Page</label>
+              <select id="utm-page" onchange="buildUtmLink()" style="width:100%;padding:.55rem .8rem;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:.86rem;outline:none;">
+                <option value="">Select page…</option>
+                <option value="">Home (index.html)</option>
+                <option value="health-insurance.html">Health Insurance</option>
+                <option value="life-insurance.html">Life Insurance</option>
+                <option value="car-insurance.html">Car Insurance</option>
+                <option value="bike-insurance.html">Bike Insurance</option>
+                <option value="commercial-vehicle-insurance.html">Commercial Vehicle</option>
+                <option value="loans.html">Loans</option>
+                <option value="blog.html">Blog</option>
+                <option value="about.html">About</option>
+                <option value="book.html">Book Consultation</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:.78rem;font-weight:600;color:var(--primary);display:block;margin-bottom:.3rem;">Source (where you're sharing)</label>
+              <select id="utm-source" onchange="buildUtmLink()" style="width:100%;padding:.55rem .8rem;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:.86rem;outline:none;">
+                <option value="">Select source…</option>
+                <option value="whatsapp">💬 WhatsApp</option>
+                <option value="facebook">📘 Facebook</option>
+                <option value="instagram">📸 Instagram</option>
+                <option value="linkedin">💼 LinkedIn</option>
+                <option value="telegram">✈️ Telegram</option>
+                <option value="twitter">🐦 Twitter/X</option>
+                <option value="google">🔍 Google (paid ad)</option>
+                <option value="sms">💬 SMS</option>
+                <option value="email">📧 Email</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:.78rem;font-weight:600;color:var(--primary);display:block;margin-bottom:.3rem;">Campaign Name <span style="font-weight:400;color:var(--muted);">(optional)</span></label>
+              <input id="utm-campaign" type="text" placeholder="e.g. diwali-offer, health-post-1" oninput="buildUtmLink()"
+                style="width:100%;padding:.55rem .8rem;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:.86rem;outline:none;"/>
+            </div>
+            <div style="display:flex;align-items:flex-end;">
+              <button onclick="copyUtmLink()" style="width:100%;padding:.6rem;background:var(--purple);color:#fff;border:none;border-radius:7px;font-family:inherit;font-size:.88rem;font-weight:700;cursor:pointer;" id="utm-copy-btn">
+                📋 Copy Link
+              </button>
+            </div>
+          </div>
+          <div id="utm-output" style="background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:.75rem 1rem;font-size:.8rem;font-family:monospace;color:var(--primary);word-break:break-all;min-height:40px;">
+            Select a page and source above to generate your link
+          </div>
+          <div style="margin-top:.8rem;font-size:.75rem;color:var(--muted);line-height:1.7;">
+            💡 <strong>How to use:</strong> Copy this link and share it on WhatsApp/Facebook/etc. instead of your normal URL.
+            Every click will be tracked accurately in the analytics above.
           </div>
         </div>
 
@@ -649,30 +709,35 @@
         </div>
 
         <!-- Daily sparkline -->
-        <div class="analytics-section" id="analytics-chart-section">
-          <div class="analytics-section-title">Daily Views (Last 14 Days)</div>
+        <div class="analytics-section">
+          <div class="analytics-section-title">Daily Views — Last 14 Days</div>
           <div class="sparkline-wrap" id="sparkline"></div>
           <div class="sparkline-labels" id="sparkline-labels"></div>
         </div>
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.4rem;">
-          <!-- By Source -->
           <div class="analytics-section">
-            <div class="analytics-section-title">Traffic Source</div>
+            <div class="analytics-section-title">📡 Traffic Source</div>
             <div id="analytics-source"><div class="loading">Loading…</div></div>
           </div>
-          <!-- By Device -->
           <div class="analytics-section">
-            <div class="analytics-section-title">Device Type</div>
+            <div class="analytics-section-title">📱 Device Type</div>
             <div id="analytics-device"><div class="loading">Loading…</div></div>
           </div>
         </div>
 
         <!-- Top Pages -->
         <div class="analytics-section">
-          <div class="analytics-section-title">Top Pages</div>
+          <div class="analytics-section-title">📄 Top Pages</div>
           <div id="analytics-pages"><div class="loading">Loading…</div></div>
         </div>
+
+        <!-- UTM Campaigns -->
+        <div class="analytics-section" id="analytics-campaigns-section" style="display:none;">
+          <div class="analytics-section-title">🎯 UTM Campaigns</div>
+          <div id="analytics-campaigns"></div>
+        </div>
+
       </div>
 
     </div><!-- /content -->
@@ -1728,57 +1793,86 @@ function closeViewsModal(e) {
 // ── SITE ANALYTICS ───────────────────────
 // ══════════════════════════════════════════
 
-const SOURCE_ICONS = {
-  google:'🔍', whatsapp:'💬', facebook:'📘',
-  instagram:'📸', telegram:'✈️', twitter:'🐦',
-  direct:'🔗', other:'🌐',
+const SOURCE_META = {
+  google:    { icon:'🔍', label:'Google Search',  color:'#4285f4' },
+  whatsapp:  { icon:'💬', label:'WhatsApp',        color:'#25d366' },
+  facebook:  { icon:'📘', label:'Facebook',        color:'#1877f2' },
+  instagram: { icon:'📸', label:'Instagram',       color:'#e1306c' },
+  linkedin:  { icon:'💼', label:'LinkedIn',        color:'#0077b5' },
+  telegram:  { icon:'✈️', label:'Telegram',        color:'#0088cc' },
+  twitter:   { icon:'🐦', label:'Twitter / X',    color:'#1da1f2' },
+  youtube:   { icon:'▶️', label:'YouTube',         color:'#ff0000' },
+  direct:    { icon:'🔗', label:'Direct / Link',   color:'#e8622a' },
+  other:     { icon:'🌐', label:'Other',            color:'#6b6b6b' },
 };
-const SOURCE_LABELS = {
-  google:'Google', whatsapp:'WhatsApp', facebook:'Facebook',
-  instagram:'Instagram', telegram:'Telegram', twitter:'Twitter/X',
-  direct:'Direct', other:'Other',
+const DEVICE_META = {
+  mobile:  { icon:'📱', label:'Mobile',  color:'#2da44e' },
+  desktop: { icon:'🖥️', label:'Desktop', color:'#0969da' },
+  tablet:  { icon:'📋', label:'Tablet',  color:'#7c3aed' },
 };
-const DEVICE_ICONS  = { mobile:'📱', desktop:'🖥️', tablet:'📋' };
 const PAGE_ICONS = {
-  home:'🏠', 'health-insurance':'🏥', 'life-insurance':'❤️',
-  'car-insurance':'🚗', 'bike-insurance':'🏍️',
+  home:'🏠','health-insurance':'🏥','life-insurance':'❤️',
+  'car-insurance':'🚗','bike-insurance':'🏍️',
   'commercial-vehicle':'🚛', loans:'🏠', blog:'📝',
   about:'ℹ️', book:'📅',
 };
-const SOURCE_COLORS = {
-  google:'#4285f4', whatsapp:'#25d366', facebook:'#1877f2',
-  instagram:'#e1306c', telegram:'#0088cc', twitter:'#1da1f2',
-  direct:'var(--accent)', other:'var(--muted)',
-};
 
-let currentAnalyticsDays = 30;
+const SITE = 'https://gleaming-rabanadas-c36160.netlify.app/';
+
+function toggleUtmBuilder() {
+  const el = document.getElementById('utm-builder');
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+function buildUtmLink() {
+  const page     = document.getElementById('utm-page').value;
+  const source   = document.getElementById('utm-source').value;
+  const campaign = document.getElementById('utm-campaign').value.trim().replace(/\s+/g,'-').toLowerCase();
+  const out      = document.getElementById('utm-output');
+
+  if (!source) { out.textContent = 'Select a source above to generate your link'; return; }
+
+  let url = SITE + (page || '');
+  url += '?utm_source=' + source;
+  if (campaign) url += '&utm_campaign=' + encodeURIComponent(campaign);
+
+  out.textContent = url;
+}
+
+function copyUtmLink() {
+  const url = document.getElementById('utm-output').textContent;
+  if (!url || url.includes('Select')) { showToast('Build a link first','error'); return; }
+  navigator.clipboard.writeText(url).then(() => {
+    const btn = document.getElementById('utm-copy-btn');
+    btn.textContent = '✅ Copied!';
+    showToast('Link copied — paste it on ' + (document.getElementById('utm-source').value||'social media'), 'success');
+    setTimeout(() => { btn.textContent = '📋 Copy Link'; }, 2500);
+  });
+}
 
 async function loadAnalytics(days) {
   currentAnalyticsDays = days;
+  document.querySelectorAll('.day-btn').forEach(b =>
+    b.classList.toggle('active', parseInt(b.dataset.days) === days));
 
-  // Update active day button
-  document.querySelectorAll('.day-btn').forEach(b => {
-    b.classList.toggle('active', parseInt(b.dataset.days) === days);
+  ['analytics-stats','analytics-source','analytics-device','analytics-pages'].forEach(id => {
+    document.getElementById(id).innerHTML = '<div class="loading">Loading…</div>';
   });
-
-  document.getElementById('analytics-stats').innerHTML  = '<div class="loading">Loading…</div>';
-  document.getElementById('analytics-source').innerHTML = '<div class="loading">Loading…</div>';
-  document.getElementById('analytics-device').innerHTML = '<div class="loading">Loading…</div>';
-  document.getElementById('analytics-pages').innerHTML  = '<div class="loading">Loading…</div>';
 
   const r = await apiFetch(`/track/stats?days=${days}`);
   if (!r.success) {
-    document.getElementById('analytics-stats').innerHTML = '<div class="loading">Failed to load analytics.</div>';
+    document.getElementById('analytics-stats').innerHTML = '<div class="loading">Failed to load. Make sure tracking snippet is on your pages.</div>';
     return;
   }
 
-  const { totalViews, bySource, byDevice, byPage, byDay } = r.data;
-  const topSource = bySource[0]?._id || '—';
-  const topPage   = byPage[0]?._id   || '—';
-  const mobileCount = (byDevice.find(d => d._id === 'mobile')?.count || 0);
+  const { totalViews, bySource, byDevice, byPage, byDay, byCampaign } = r.data;
+  const topSource   = bySource[0]?._id || 'direct';
+  const topPage     = byPage[0]?._id   || '—';
+  const mobileCount = byDevice.find(d => d._id === 'mobile')?.count || 0;
   const mobilePct   = totalViews ? Math.round((mobileCount / totalViews) * 100) : 0;
 
-  // ── Stats cards ──────────────────────────────────────────
+  // ── Stat cards ───────────────────────────────────────────
+  const sm = SOURCE_META[topSource] || SOURCE_META.other;
   document.getElementById('analytics-stats').innerHTML = `
     <div class="analytics-card">
       <div class="stat-label">Total Views</div>
@@ -1787,113 +1881,113 @@ async function loadAnalytics(days) {
     </div>
     <div class="analytics-card green">
       <div class="stat-label">Top Source</div>
-      <div class="stat-num" style="font-size:1.6rem;">${SOURCE_ICONS[topSource]||'🌐'} ${SOURCE_LABELS[topSource]||topSource}</div>
-      <div class="stat-sub">${bySource[0]?.count||0} views</div>
+      <div class="stat-num" style="font-size:1.5rem;">${sm.icon} ${sm.label}</div>
+      <div class="stat-sub">${(bySource[0]?.count||0).toLocaleString()} views</div>
     </div>
     <div class="analytics-card purple">
       <div class="stat-label">Mobile Visitors</div>
       <div class="stat-num">${mobilePct}%</div>
-      <div class="stat-sub">${mobileCount.toLocaleString()} of ${totalViews.toLocaleString()}</div>
+      <div class="stat-sub">${mobileCount.toLocaleString()} mobile of ${totalViews.toLocaleString()}</div>
     </div>
     <div class="analytics-card orange">
       <div class="stat-label">Top Page</div>
-      <div class="stat-num" style="font-size:1.3rem;">${PAGE_ICONS[topPage]||'📄'} ${topPage}</div>
-      <div class="stat-sub">${byPage[0]?.count||0} views</div>
+      <div class="stat-num" style="font-size:1.2rem;">${PAGE_ICONS[topPage]||'📄'} ${topPage}</div>
+      <div class="stat-sub">${(byPage[0]?.count||0).toLocaleString()} views</div>
     </div>`;
 
-  // ── Sparkline ─────────────────────────────────────────────
   renderSparkline(byDay);
+  renderBars('analytics-source', bySource, totalViews, SOURCE_META);
+  renderBars('analytics-device', byDevice, totalViews, DEVICE_META);
+  renderTopPages(byPage, totalViews);
+  renderCampaigns(byCampaign);
+}
 
-  // ── By Source ─────────────────────────────────────────────
-  const maxSrc = bySource[0]?.count || 1;
-  document.getElementById('analytics-source').innerHTML = bySource.length
-    ? bySource.map(s => {
-        const pct  = Math.round((s.count / totalViews) * 100);
-        const fill = Math.round((s.count / maxSrc) * 100);
-        return `<div class="a-bar-row">
-          <div class="a-bar-label">${SOURCE_ICONS[s._id]||'🌐'} ${SOURCE_LABELS[s._id]||s._id}</div>
-          <div class="a-bar-track"><div class="a-bar-fill" style="width:${fill}%;background:${SOURCE_COLORS[s._id]||'var(--blue)'}"></div></div>
-          <div class="a-bar-count">${s.count}</div>
-          <div class="a-bar-pct">${pct}%</div>
-        </div>`;
-      }).join('')
-    : '<div style="font-size:.82rem;color:var(--muted);">No data yet. Add the tracking snippet to your pages.</div>';
+function renderBars(containerId, data, total, meta) {
+  const el  = document.getElementById(containerId);
+  const max = data[0]?.count || 1;
+  if (!data.length) {
+    el.innerHTML = '<div style="font-size:.82rem;color:var(--muted);padding:.5rem 0;">No data yet.</div>';
+    return;
+  }
+  el.innerHTML = data.map(item => {
+    const m    = meta[item._id] || { icon:'🌐', label: item._id, color:'var(--muted)' };
+    const pct  = total ? Math.round((item.count / total) * 100) : 0;
+    const fill = Math.round((item.count / max) * 100);
+    return `<div class="a-bar-row">
+      <div class="a-bar-label">${m.icon} ${m.label}</div>
+      <div class="a-bar-track">
+        <div class="a-bar-fill" style="width:${fill}%;background:${m.color}"></div>
+      </div>
+      <div class="a-bar-count">${item.count.toLocaleString()}</div>
+      <div class="a-bar-pct">${pct}%</div>
+    </div>`;
+  }).join('');
+}
 
-  // ── By Device ─────────────────────────────────────────────
-  const maxDev = byDevice[0]?.count || 1;
-  const devColors = { mobile:'var(--green)', desktop:'var(--blue)', tablet:'var(--purple)' };
-  document.getElementById('analytics-device').innerHTML = byDevice.length
-    ? byDevice.map(d => {
-        const pct  = Math.round((d.count / totalViews) * 100);
-        const fill = Math.round((d.count / maxDev) * 100);
-        return `<div class="a-bar-row">
-          <div class="a-bar-label">${DEVICE_ICONS[d._id]||'📱'} ${d._id}</div>
-          <div class="a-bar-track"><div class="a-bar-fill" style="width:${fill}%;background:${devColors[d._id]||'var(--blue)'}"></div></div>
-          <div class="a-bar-count">${d.count}</div>
-          <div class="a-bar-pct">${pct}%</div>
-        </div>`;
-      }).join('')
-    : '<div style="font-size:.82rem;color:var(--muted);">No data yet.</div>';
+function renderTopPages(byPage, total) {
+  const el  = document.getElementById('analytics-pages');
+  const max = byPage[0]?.count || 1;
+  if (!byPage.length) {
+    el.innerHTML = '<div style="font-size:.82rem;color:var(--muted);">No page data yet. Add the tracking snippet to your pages.</div>';
+    return;
+  }
+  el.innerHTML = `<table style="width:100%;border-collapse:collapse;">
+    <thead><tr>
+      <th style="text-align:left;font-size:.7rem;color:var(--muted);padding:.4rem 0;font-weight:700;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);">Page</th>
+      <th style="text-align:right;font-size:.7rem;color:var(--muted);padding:.4rem 0;font-weight:700;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);">Views</th>
+      <th style="text-align:right;font-size:.7rem;color:var(--muted);padding:.4rem 0;font-weight:700;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);">Share</th>
+    </tr></thead>
+    <tbody>${byPage.map((pg, i) => {
+      const pct  = total ? Math.round((pg.count / total) * 100) : 0;
+      const fill = Math.round((pg.count / max) * 100);
+      return `<tr style="${i < byPage.length-1 ? 'border-bottom:1px solid var(--border)':''}">
+        <td style="padding:.65rem 0;">
+          <div style="font-size:.84rem;font-weight:600;color:var(--primary);">${PAGE_ICONS[pg._id]||'📄'} ${pg._id}</div>
+          <div style="margin-top:.3rem;height:5px;background:var(--bg);border-radius:100px;overflow:hidden;max-width:200px;">
+            <div style="width:${fill}%;height:100%;background:var(--accent);border-radius:100px;"></div>
+          </div>
+        </td>
+        <td style="text-align:right;font-size:.86rem;font-weight:700;color:var(--text);padding:.65rem 0;">${pg.count.toLocaleString()}</td>
+        <td style="text-align:right;font-size:.82rem;color:var(--muted);padding:.65rem 0;">${pct}%</td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table>`;
+}
 
-  // ── Top Pages ─────────────────────────────────────────────
-  const maxPg = byPage[0]?.count || 1;
-  document.getElementById('analytics-pages').innerHTML = byPage.length
-    ? `<table style="width:100%;border-collapse:collapse;">
-        <thead><tr>
-          <th style="text-align:left;font-size:.7rem;color:var(--muted);padding:.4rem 0;font-weight:700;text-transform:uppercase;letter-spacing:.5px;">Page</th>
-          <th style="text-align:right;font-size:.7rem;color:var(--muted);padding:.4rem 0;font-weight:700;text-transform:uppercase;letter-spacing:.5px;">Views</th>
-          <th style="text-align:right;font-size:.7rem;color:var(--muted);padding:.4rem 0;font-weight:700;text-transform:uppercase;letter-spacing:.5px;">Share</th>
-        </tr></thead>
-        <tbody>
-          ${byPage.map((pg, i) => {
-            const pct  = Math.round((pg.count / totalViews) * 100);
-            const fill = Math.round((pg.count / maxPg) * 100);
-            return `<tr style="${i < byPage.length-1?'border-bottom:1px solid var(--border)':''}">
-              <td style="padding:.6rem 0;">
-                <div style="font-size:.84rem;font-weight:600;color:var(--primary);">
-                  ${PAGE_ICONS[pg._id]||'📄'} ${pg._id}
-                </div>
-                <div style="margin-top:.25rem;height:5px;background:var(--bg);border-radius:100px;overflow:hidden;max-width:180px;">
-                  <div style="width:${fill}%;height:100%;background:var(--accent);border-radius:100px;"></div>
-                </div>
-              </td>
-              <td style="text-align:right;font-size:.86rem;font-weight:700;color:var(--text);padding:.6rem 0;">${pg.count.toLocaleString()}</td>
-              <td style="text-align:right;font-size:.82rem;color:var(--muted);padding:.6rem 0;">${pct}%</td>
-            </tr>`;
-          }).join('')}
-        </tbody>
-      </table>`
-    : '<div style="font-size:.82rem;color:var(--muted);">No page data yet. Add the tracking snippet to your pages.</div>';
+function renderCampaigns(byCampaign) {
+  const section = document.getElementById('analytics-campaigns-section');
+  const el      = document.getElementById('analytics-campaigns');
+  if (!byCampaign?.length) { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+  el.innerHTML = byCampaign.map(c => {
+    const sm = SOURCE_META[c._id.source] || SOURCE_META.other;
+    return `<div class="a-bar-row">
+      <div class="a-bar-label" style="width:200px;">${sm.icon} ${c._id.campaign||'(no name)'}</div>
+      <div class="a-bar-track"><div class="a-bar-fill" style="width:100%;background:${sm.color}"></div></div>
+      <div class="a-bar-count">${c.count}</div>
+    </div>`;
+  }).join('');
 }
 
 function renderSparkline(byDay) {
   const sparkEl  = document.getElementById('sparkline');
   const labelsEl = document.getElementById('sparkline-labels');
-  if (!byDay.length) {
-    sparkEl.innerHTML  = '<div style="font-size:.8rem;color:var(--muted);">No daily data yet.</div>';
-    labelsEl.innerHTML = '';
-    return;
-  }
-
-  // Fill in missing days with 0
   const days = [];
   for (let i = 13; i >= 0; i--) {
     const d   = new Date(Date.now() - i * 86400000);
     const key = d.toISOString().slice(0, 10);
-    const match = byDay.find(b => b._id === key);
-    days.push({ date: key, count: match?.count || 0,
+    days.push({ key, count: byDay.find(b => b._id === key)?.count || 0,
       label: d.toLocaleDateString('en-IN', { day:'numeric', month:'short' }) });
   }
-
   const max = Math.max(...days.map(d => d.count), 1);
-  sparkEl.innerHTML = days.map(d => {
-    const h   = Math.max(4, Math.round((d.count / max) * 48));
+  sparkEl.innerHTML  = days.map(d => {
+    const h = Math.max(4, Math.round((d.count / max) * 48));
     return `<div class="sparkline-bar" title="${d.label}: ${d.count} views" style="height:${h}px;"></div>`;
   }).join('');
-
-  // Show first and last label only
   labelsEl.innerHTML = `<span>${days[0].label}</span><span>${days[days.length-1].label}</span>`;
 }
+
+let currentAnalyticsDays = 30;
 
 // ── Helpers ───────────────────────────────────────────────
 function fmtDate(iso) {
