@@ -103,6 +103,59 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// ── Dynamic OG Preview for Blog Posts ────────────────────
+// WHY: When someone shares a blog post link on WhatsApp/Facebook,
+// these platforms look for og:image, og:title, og:description tags.
+// Your blog.html is a single page app — it loads posts via JavaScript
+// AFTER the page loads, so WhatsApp/Facebook bots never see the post data.
+// This route serves a static HTML page WITH the correct OG tags for each
+// blog post, then immediately redirects the real user to blog.html?post=slug.
+// RESULT: Every blog post gets its own unique WhatsApp preview card
+// showing the article title, cover image and excerpt.
+app.get('/og/:slug', async (req, res) => {
+  try {
+    const BlogPost = require('./models/BlogPost');
+    const post = await BlogPost.findOne({
+      slug: req.params.slug,
+      status: 'published'
+    });
+
+    if (!post) return res.redirect('https://covercredit.in/blog');
+
+    const title       = post.title   || 'Cover Credit Blog';
+    const description = post.excerpt || 'Read this article on Cover Credit';
+    const image       = post.coverImage || 'https://covercredit.in/og-banner.png';
+    const pageUrl     = `https://covercredit.in/blog?post=${post.slug}`;
+
+    res.send(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8"/>
+  <title>${title} — Cover Credit</title>
+  <meta name="description" content="${description}"/>
+  <meta property="og:type" content="article"/>
+  <meta property="og:site_name" content="Cover Credit"/>
+  <meta property="og:url" content="${pageUrl}"/>
+  <meta property="og:title" content="${title} — Cover Credit"/>
+  <meta property="og:description" content="${description}"/>
+  <meta property="og:image" content="${image}"/>
+  <meta property="og:image:width" content="1200"/>
+  <meta property="og:image:height" content="630"/>
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="${title}"/>
+  <meta name="twitter:description" content="${description}"/>
+  <meta name="twitter:image" content="${image}"/>
+  <meta http-equiv="refresh" content="0;url=${pageUrl}"/>
+  <script>window.location.href="${pageUrl}";</script>
+</head>
+<body>Redirecting...</body>
+</html>`);
+  } catch(err) {
+    console.error('OG route error:', err.message);
+    res.redirect('https://covercredit.in/blog');
+  }
+});
+
 // ── Serve Admin Panel ─────────────────────────────────────
 app.use('/admin', express.static(path.join(__dirname, 'admin')));
 
