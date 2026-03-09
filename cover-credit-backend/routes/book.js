@@ -3,7 +3,6 @@
 // Handles consultation booking form submissions
 // Updated for new 4-step department-based wizard form
 // ============================================================
-
 const express = require('express');
 const { body, validationResult } = require('express-validator');
 const router  = express.Router();
@@ -17,32 +16,25 @@ const bookingValidation = [
     .trim().notEmpty().withMessage('Please select a department')
     .isIn(['loan', 'health', 'life', 'bike', 'car', 'commercial'])
     .withMessage('Invalid department selected'),
-
   body('name')
     .trim().notEmpty().withMessage('Name is required')
     .isLength({ max: 100 }).withMessage('Name too long'),
-
   body('phone')
     .trim().notEmpty().withMessage('Phone number is required')
     .matches(/^[+\d][\d\s\-]{7,15}$/).withMessage('Invalid phone number'),
-
   body('email')
     .optional({ checkFalsy: true })
     .isEmail().withMessage('Invalid email address')
     .normalizeEmail(),
-
   body('city')
     .trim().notEmpty().withMessage('City is required')
     .isLength({ max: 100 }).withMessage('City name too long'),
-
   body('details')
     .optional()
     .isObject().withMessage('Details must be an object'),
-
   body('contactMethod')
     .optional()
     .isIn(['Phone Call', 'WhatsApp', 'Email']).withMessage('Invalid contact method'),
-
   body('timeSlot')
     .optional()
     .isIn([
@@ -50,11 +42,20 @@ const bookingValidation = [
       'Afternoon (12 PM – 4 PM)',
       'Evening (4 PM – 7 PM)',
     ]).withMessage('Invalid time slot'),
-
   body('notes')
     .optional()
     .isLength({ max: 1000 }).withMessage('Notes too long (max 1000 chars)'),
 ];
+
+// ── Department label map ──────────────────────────────────
+const DEPT_LABEL = {
+  loan:       'Loans & Finance',
+  health:     'Health Insurance',
+  life:       'Life Insurance',
+  bike:       'Bike Insurance',
+  car:        'Car Insurance',
+  commercial: 'Commercial Vehicle Insurance',
+};
 
 // ── POST /api/book ────────────────────────────────────────
 router.post('/', bookingValidation, async (req, res) => {
@@ -96,10 +97,35 @@ router.post('/', bookingValidation, async (req, res) => {
       source:        'book-form',
     });
 
+    // ── Build reference number ────────────────────────────
+    const reference = `CC-${new Date().getFullYear()}-${booking._id.toString().slice(-4).toUpperCase()}`;
+
+    // ── Build WhatsApp pre-filled message for client ──────
+    // WHY: After booking, the success screen shows a WhatsApp button.
+    // Instead of opening a blank chat, this pre-fills a personalised
+    // confirmation message so the client immediately knows their booking
+    // details without any extra typing from our side.
+    const deptLabel  = DEPT_LABEL[department] || department;
+    const slot       = timeSlot || 'Morning (9 AM – 12 PM)';
+    const cleanPhone = phone.replace(/\D/g, '');
+    const waText     = encodeURIComponent(
+      `Hi ${name} 👋\n\n` +
+      `Thank you for booking a free consultation with *Cover Credit*!\n\n` +
+      `📋 *Reference:* ${reference}\n` +
+      `📌 *Department:* ${deptLabel}\n` +
+      `📍 *City:* ${city}\n` +
+      `⏰ *Preferred Time:* ${slot}\n\n` +
+      `Our specialist will call you within *2 business hours*.\n\n` +
+      `If you have any questions in the meantime, just reply here.\n\n` +
+      `— Cover Credit Team\n` +
+      `📞 +91 78428 54466\n` +
+      `🌐 covercredit.in`
+    );
+    const waUrl = `https://wa.me/${cleanPhone}?text=${waText}`;
+
     // Fire-and-forget alerts (don't block the response)
     sendBookingAlert(booking.toObject()).catch(console.error);
     notifyNewBooking(booking.toObject()).catch(console.error);
-
     if (email) {
       sendUserConfirmation(email, name, 'booking', department).catch(console.error);
     }
@@ -108,7 +134,8 @@ router.post('/', bookingValidation, async (req, res) => {
       success:   true,
       message:   'Booking confirmed! We will reach you shortly.',
       id:        booking._id,
-      reference: `CC-${new Date().getFullYear()}-${booking._id.toString().slice(-4).toUpperCase()}`,
+      reference,
+      waUrl,     // ← Frontend uses this to open WhatsApp with pre-filled message
     });
 
   } catch (err) {
