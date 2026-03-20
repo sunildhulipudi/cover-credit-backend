@@ -1365,7 +1365,11 @@ function openBlogCompose() {
   document.getElementById('blog-status').value  = 'draft';
   document.getElementById('blog-expiry').value  = '';
   document.getElementById('blog-content').innerHTML = '';
+  document.getElementById('blog-cover-url').value = '';
   document.getElementById('cover-preview').classList.remove('show');
+  document.getElementById('img-upload-status').textContent = '';
+  const _cf = document.getElementById('blog-cover-file'); if (_cf) _cf.value = '';
+  switchImgTab('upload');
   document.getElementById('blog-save-status').textContent = '';
   updateExcerptCount();
   updateSaveBtnLabel();
@@ -1389,12 +1393,14 @@ async function openBlogEdit(id) {
   document.getElementById('blog-author').value    = p.author||'Cover Credit Team';
   document.getElementById('blog-excerpt').value   = p.excerpt||'';
   document.getElementById('blog-cover').value     = p.coverImage||'';
+  document.getElementById('blog-cover-url').value = p.coverImage||'';
   document.getElementById('blog-tags').value      = (p.tags||[]).join(', ');
   document.getElementById('blog-status').value    = p.status||'draft';
   document.getElementById('blog-expiry').value    = p.expiresAt ? new Date(p.expiresAt).toISOString().slice(0,10) : '';
   document.getElementById('blog-content').innerHTML = p.content||'';
   document.getElementById('blog-save-status').textContent = '';
-  previewCover();
+  if (p.coverImage) { switchImgTab('url'); previewCover(); } else { switchImgTab('upload'); }
+  document.getElementById('img-upload-status').textContent = '';
   updateExcerptCount();
   updateSaveBtnLabel();
   document.getElementById('blog-overlay').classList.add('show');
@@ -1424,7 +1430,7 @@ async function saveBlogPost() {
   const payload = {
     title, category, excerpt, content,
     author:     document.getElementById('blog-author').value.trim() || 'Cover Credit Team',
-    coverImage: document.getElementById('blog-cover').value.trim(),
+    coverImage: document.getElementById('blog-cover-url').value.trim() || document.getElementById('blog-cover').value.trim(),
     tags:       document.getElementById('blog-tags').value,
     status:     document.getElementById('blog-status').value,
     expiresAt:  expiryVal ? expiryVal : null,
@@ -1497,6 +1503,102 @@ function previewCover() {
   } else {
     prev.classList.remove('show');
   }
+}
+
+
+// ── Image upload tab switcher ─────────────────────────────
+function switchImgTab(tab) {
+  const panelUpload = document.getElementById('img-panel-upload');
+  const panelUrl    = document.getElementById('img-panel-url');
+  const tabs        = document.querySelectorAll('.img-tab');
+  if (panelUpload) panelUpload.classList.toggle('active', tab === 'upload');
+  if (panelUrl)    panelUrl.classList.toggle('active',    tab === 'url');
+  tabs.forEach(t => t.classList.toggle('active', t.getAttribute('onclick')?.includes(`'${tab}'`)));
+  if (tab === 'url') setTimeout(() => document.getElementById('blog-cover')?.focus(), 50);
+}
+
+// ── Drag-and-drop handlers ────────────────────────────────
+function handleDragOver(e) {
+  e.preventDefault();
+  document.getElementById('img-dropzone')?.classList.add('drag');
+}
+function handleDragLeave(e) {
+  document.getElementById('img-dropzone')?.classList.remove('drag');
+}
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('img-dropzone')?.classList.remove('drag');
+  const file = e.dataTransfer.files?.[0];
+  if (file && file.type.startsWith('image/')) uploadCoverFile(file);
+}
+function handleFileSelect(e) {
+  const file = e.target.files?.[0];
+  if (file) uploadCoverFile(file);
+}
+
+// ── Upload file to Cloudinary ─────────────────────────────
+async function uploadCoverFile(file) {
+  if (!file) return;
+  if (!file.type.startsWith('image/')) { setUploadStatus('Only image files are allowed.', 'error'); return; }
+  if (file.size > 5 * 1024 * 1024)    { setUploadStatus('File too large. Max 5 MB.', 'error'); return; }
+
+  // Show local preview immediately while uploading
+  const prev     = document.getElementById('cover-preview');
+  const img      = document.getElementById('cover-preview-img');
+  const localUrl = URL.createObjectURL(file);
+  if (img)  { img.src = localUrl; img.onerror = null; }
+  if (prev) prev.classList.add('show');
+
+  setUploadStatus('\u23f3 Uploading\u2026', 'info');
+  const bar  = document.getElementById('img-upload-bar');
+  const fill = document.getElementById('img-upload-fill');
+  if (bar)  bar.classList.add('show');
+  if (fill) { fill.style.width = '35%'; setTimeout(() => { fill.style.width = '75%'; }, 400); }
+
+  try {
+    const fd = new FormData();
+    fd.append('image', file);
+    const res  = await fetch(API + '/admin/upload', {
+      method:  'POST',
+      headers: { Authorization: 'Bearer ' + token },
+      body:    fd,
+    });
+    const data = await res.json();
+
+    if (fill) fill.style.width = '100%';
+    setTimeout(() => { if (bar) bar.classList.remove('show'); if (fill) fill.style.width = '0'; }, 700);
+
+    if (data.success) {
+      document.getElementById('blog-cover-url').value = data.url;
+      if (img) { img.src = data.url; img.onerror = () => { if (prev) prev.classList.remove('show'); }; }
+      setUploadStatus('\u2713 Uploaded \u2014 ' + (file.size / 1024).toFixed(0) + ' KB', 'success');
+    } else {
+      setUploadStatus('\u26a0 ' + (data.message || 'Upload failed. Paste a URL instead.'), 'error');
+    }
+  } catch (err) {
+    if (fill) fill.style.width = '0';
+    if (bar)  bar.classList.remove('show');
+    setUploadStatus('\u26a0 Network error. Paste a URL instead.', 'error');
+  }
+}
+
+function setUploadStatus(msg, type) {
+  const el = document.getElementById('img-upload-status');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.color = type === 'success' ? 'var(--green)'
+                 : type === 'error'   ? 'var(--red)'
+                 :                      'var(--muted)';
+}
+
+// ── Remove cover image ────────────────────────────────────
+function removeCoverImage() {
+  document.getElementById('blog-cover').value     = '';
+  document.getElementById('blog-cover-url').value = '';
+  document.getElementById('cover-preview').classList.remove('show');
+  setUploadStatus('', '');
+  const fi = document.getElementById('blog-cover-file');
+  if (fi) fi.value = '';
 }
 
 // ── Excerpt counter ───────────────────────────────────────
@@ -1800,7 +1902,7 @@ const PAGE_ICONS = {
   about:'ℹ️', book:'📅',
 };
 
-const SITE = 'https://covercredit.in/';  
+const SITE = 'https://covercredit.in/';
 
 function toggleUtmBuilder() {
   const el = document.getElementById('utm-builder');
