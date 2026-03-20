@@ -29,8 +29,9 @@ app.use(cors({
   credentials: true,
 }));
 
-app.use(express.json({ limit: '10kb' }));
-app.use(express.urlencoded({ extended: true }));
+// FIX: was '10kb' — blog post HTML content easily exceeds that → "Something went wrong"
+app.use(express.json({ limit: '2mb' }));
+app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
 // ── Global Rate Limiter ────────────────────────────────────
@@ -85,13 +86,14 @@ function startReminderChecker() {
 }
 
 // ── API Routes ────────────────────────────────────────────
-app.use('/api/contact',    formLimiter, require('./routes/contact'));
-app.use('/api/book',       formLimiter, require('./routes/book'));
-app.use('/api/admin/blog', require('./routes/adminBlog'));   // ← must be before /api/admin
-app.use('/api/admin',      require('./routes/admin'));
-app.use('/api/blog',       require('./routes/blog'));
-app.use('/api/track',      require('./routes/track'));        // ← site analytics tracking
-app.use('/api/auth',       require('./routes/auth'));
+app.use('/api/contact',      formLimiter, require('./routes/contact'));
+app.use('/api/book',         formLimiter, require('./routes/book'));
+app.use('/api/admin/upload', require('./routes/upload'));       // ← image upload (Cloudinary)
+app.use('/api/admin/blog',   require('./routes/adminBlog'));    // ← must be before /api/admin
+app.use('/api/admin',        require('./routes/admin'));
+app.use('/api/blog',         require('./routes/blog'));
+app.use('/api/track',        require('./routes/track'));        // ← site analytics tracking
+app.use('/api/auth',         require('./routes/auth'));
 
 // ── Health Check ─────────────────────────────────────────
 app.get('/api/health', (req, res) => {
@@ -104,14 +106,6 @@ app.get('/api/health', (req, res) => {
 });
 
 // ── Dynamic OG Preview for Blog Posts ────────────────────
-// WHY: When someone shares a blog post link on WhatsApp/Facebook,
-// these platforms look for og:image, og:title, og:description tags.
-// Your blog.html is a single page app — it loads posts via JavaScript
-// AFTER the page loads, so WhatsApp/Facebook bots never see the post data.
-// This route serves a static HTML page WITH the correct OG tags for each
-// blog post, then immediately redirects the real user to blog.html?post=slug.
-// RESULT: Every blog post gets its own unique WhatsApp preview card
-// showing the article title, cover image and excerpt.
 app.get('/og/:slug', async (req, res) => {
   try {
     const BlogPost = require('./models/BlogPost');
