@@ -59,7 +59,7 @@ router.post('/', async (req, res) => {
       title: title.trim(), excerpt: excerpt.trim(), content,
       coverImage: coverImage || '',
       category, author: (author || 'Cover Credit Team').trim(),
-      tags: Array.isArray(tags) ? tags : (tags ? String(tags).split(',').map(t=>t.trim()).filter(Boolean) : []),
+      tags: Array.isArray(tags) ? tags : (tags ? String(tags).split(',').map(t => t.trim()).filter(Boolean) : []),
       status: status || 'draft',
       publishedAt: status === 'published' ? new Date() : null,
       expiresAt: expiresAt ? new Date(expiresAt) : null,
@@ -93,9 +93,9 @@ router.patch('/:id', async (req, res) => {
     const post = await BlogPost.findByIdAndUpdate(req.params.id, update, { new: true, runValidators: true });
     if (!post) return res.status(404).json({ success: false, message: 'Not found.' });
 
-    // Re-run slug generation if title changed
+    // FIX: removed post.isNew = false (readonly Mongoose internal flag — had no effect)
+    // markModified triggers the pre-save slug regeneration hook correctly
     if (update.title) {
-      post.isNew = false;
       post.markModified('title');
       await post.save();
     }
@@ -122,23 +122,19 @@ router.get('/:id/views', async (req, res) => {
     const postId = req.params.id;
 
     const [bySource, byDevice, recent, total] = await Promise.all([
-      // Group by source
       BlogView.aggregate([
         { $match: { postId: require('mongoose').Types.ObjectId.createFromHexString(postId) } },
         { $group: { _id: '$source', count: { $sum: 1 } } },
         { $sort:  { count: -1 } },
       ]),
-      // Group by device
       BlogView.aggregate([
         { $match: { postId: require('mongoose').Types.ObjectId.createFromHexString(postId) } },
         { $group: { _id: '$device', count: { $sum: 1 } } },
         { $sort:  { count: -1 } },
       ]),
-      // 10 most recent views
       BlogView.find({ postId })
         .sort({ createdAt: -1 }).limit(10)
         .select('source device createdAt referrer').lean(),
-      // Total count
       BlogView.countDocuments({ postId }),
     ]);
 
