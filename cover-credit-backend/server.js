@@ -29,20 +29,29 @@ app.use(cors({
   credentials: true,
 }));
 
-// FIX: was '10kb' — blog post HTML content easily exceeds that → "Something went wrong"
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
-// ── Global Rate Limiter ────────────────────────────────────
+// ── Rate Limiters ──────────────────────────────────────────
+
+// Global limiter — covers all /api/* routes as a baseline
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, max: 100,
   message: { success: false, message: 'Too many requests. Please try again later.' },
   standardHeaders: true, legacyHeaders: false,
 });
-app.use('/api/', globalLimiter);
 
-// ── Stricter limiter for form submissions ──────────────────
+// Blog-specific limiter — generous for readers browsing multiple posts
+// A user reading 10 posts + grid loads easily hits 30 requests in 15 mins
+const blogLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, max: 300,
+  message: { success: false, message: 'Too many requests. Please try again later.' },
+  standardHeaders: true, legacyHeaders: false,
+  skip: (req) => !!req.headers['authorization'], // admins never rate-limited
+});
+
+// Strict limiter for form submissions
 const formLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, max: 10,
   message: { success: false, message: 'Too many submissions. Please try again in an hour.' },
@@ -88,11 +97,12 @@ function startReminderChecker() {
 // ── API Routes ────────────────────────────────────────────
 app.use('/api/contact',      formLimiter, require('./routes/contact'));
 app.use('/api/book',         formLimiter, require('./routes/book'));
-app.use('/api/admin/upload', require('./routes/upload'));       // ← image upload (Cloudinary)
-app.use('/api/admin/blog',   require('./routes/adminBlog'));    // ← must be before /api/admin
+app.use('/api/admin/upload', require('./routes/upload'));
+app.use('/api/admin/blog',   require('./routes/adminBlog'));
 app.use('/api/admin',        require('./routes/admin'));
-app.use('/api/blog',         require('./routes/blog'));
-app.use('/api/track',        require('./routes/track'));        // ← site analytics tracking
+// Blog public routes get their own generous limiter (not the global 100/15min cap)
+app.use('/api/blog',         blogLimiter, require('./routes/blog'));
+app.use('/api/track',        globalLimiter, require('./routes/track'));
 app.use('/api/auth',         require('./routes/auth'));
 
 // ── Health Check ─────────────────────────────────────────
@@ -106,6 +116,8 @@ app.get('/api/health', (req, res) => {
 });
 
 // ── Dynamic OG Preview for Blog Posts ────────────────────
+// Used by WhatsApp/Facebook crawlers to get correct per-post OG tags
+// blog.html shareWhatsApp() uses this URL: https://api.covercredit.in/og/:slug
 app.get('/og/:slug', async (req, res) => {
   try {
     const BlogPost = require('./models/BlogPost');
