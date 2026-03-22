@@ -2255,33 +2255,74 @@ function setupEditorPasteHandler() {
 }
 
 function handleEditorPaste(e) {
-  e.preventDefault();
-  const html = e.clipboardData.getData('text/html');
-  const text = e.clipboardData.getData('text/plain');
-  if (html) {
-    let clean = html;
-    clean = clean.replace(/<o:p[^>]*>[\s\S]*?<\/o:p>/gi, '');
-    clean = clean.replace(/<!--[\s\S]*?-->/g, '');
-    clean = clean.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
-    clean = clean.replace(/\s*style="([^"]*)"/gi, function(match, styles) {
-      const s = styles
-        .replace(/color\s*:[^;]+;?/gi, '')
-        .replace(/background(-color)?\s*:[^;]+;?/gi, '')
-        .replace(/font-family\s*:[^;]+;?/gi, '')
-        .replace(/font-size\s*:[^;]+;?/gi, '')
-        .replace(/mso-[^:]+:[^;]+;?/gi, '')
-        .trim().replace(/;+$/, '');
-      return s ? ' style="' + s + '"' : '';
-    });
-    clean = clean.replace(/<span\s*>([\s\S]*?)<\/span>/gi, '$1');
-    clean = clean.replace(/<span style="">([\s\S]*?)<\/span>/gi, '$1');
-    document.execCommand('insertHTML', false, clean);
-  } else if (text) {
-    const escaped = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    const withBreaks = escaped.replace(/\n\n+/g, '</p><p>').replace(/\n/g, '<br>');
-    document.execCommand('insertHTML', false, '<p>' + withBreaks + '</p>');
+  // Strategy: let the browser do the paste natively (NO e.preventDefault()),
+  // then clean up colour/style junk 10ms later. Works in Chrome 110+, Firefox, Safari.
+  const editor = document.getElementById('blog-content');
+  // Small delay so the browser finishes inserting the pasted DOM nodes
+  setTimeout(function() {
+    cleanEditorContent(editor);
+    updateWordCount();
+  }, 10);
+}
+
+function cleanEditorContent(editor) {
+  // Walk every element and strip colour/bg/font inline styles
+  // These are injected by Word, Google Docs, Gmail, etc.
+  editor.querySelectorAll('[style]').forEach(function(el) {
+    const cleaned = el.getAttribute('style')
+      .replace(/color\s*:[^;]+;?/gi, '')
+      .replace(/background(-color)?\s*:[^;]+;?/gi, '')
+      .replace(/font-family\s*:[^;]+;?/gi, '')
+      .replace(/font-size\s*:[^;]+;?/gi, '')
+      .replace(/mso-[^:]+:[^;]+;?/gi, '')
+      .replace(/line-height\s*:[^;]+;?/gi, '')
+      .trim().replace(/;+$/, '');
+    if (cleaned) {
+      el.setAttribute('style', cleaned);
+    } else {
+      el.removeAttribute('style');
+    }
+  });
+  // Remove empty spans left over from Word/Docs
+  editor.querySelectorAll('span:not([class]):not([id])').forEach(function(span) {
+    if (!span.hasAttribute('style') && !span.hasAttribute('class')) {
+      const parent = span.parentNode;
+      while (span.firstChild) parent.insertBefore(span.firstChild, span);
+      parent.removeChild(span);
+    }
+  });
+  // Remove Word/Office specific tags
+  editor.querySelectorAll('o\\:p, w\\:sdt, w\\:sdtpr').forEach(function(el) {
+    el.remove();
+  });
+}
+
+
+// ── Modern HTML insertion helper (replaces deprecated execCommand insertHTML) ──
+// Works in Chrome 110+, Firefox, Safari
+function insertHtmlAtCaret(html) {
+  const editor = document.getElementById('blog-content');
+  editor.focus();
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount) {
+    // No selection — just append to end of editor
+    editor.innerHTML += html;
+    return;
   }
-  updateWordCount();
+  const range = sel.getRangeAt(0);
+  range.deleteContents();
+  // Parse html into a DocumentFragment
+  const frag = document.createRange().createContextualFragment(html);
+  const lastNode = frag.lastChild;
+  range.insertNode(frag);
+  // Move cursor to end of inserted content
+  if (lastNode) {
+    const newRange = document.createRange();
+    newRange.setStartAfter(lastNode);
+    newRange.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(newRange);
+  }
 }
 
 // Insert table button
@@ -2297,8 +2338,7 @@ function edInsertTable() {
     html += '</tr>';
   }
   html += '</tbody></table><p></p>';
-  document.getElementById('blog-content').focus();
-  document.execCommand('insertHTML', false, html);
+  insertHtmlAtCaret(html);
   updateWordCount();
 }
 
