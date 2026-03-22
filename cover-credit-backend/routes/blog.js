@@ -10,22 +10,20 @@ const BlogView  = require('../models/BlogView');
 router.get('/', async (req, res) => {
   try {
     const page  = Math.max(1, parseInt(req.query.page)  || 1);
-    const limit = Math.min(50, parseInt(req.query.limit) || 12);
+    // FIX: raised from 50 → 100 so blog.html ?limit=100 works correctly
+    const limit = Math.min(100, parseInt(req.query.limit) || 12);
     const now   = new Date();
-
     const filter = {
       status: 'published',
       publishedAt: { $lte: now },
       $or: [{ expiresAt: null }, { expiresAt: { $gt: now } }],
     };
     if (req.query.category && req.query.category !== 'all') filter.category = req.query.category;
-
     const [posts, total] = await Promise.all([
       BlogPost.find(filter).sort({ publishedAt: -1 })
         .skip((page - 1) * limit).limit(limit).select('-content').lean(),
       BlogPost.countDocuments(filter),
     ]);
-
     res.json({
       success: true, data: posts,
       pagination: { page, limit, total, pages: Math.ceil(total / limit) },
@@ -44,7 +42,6 @@ router.get('/:slug', async (req, res) => {
       status: 'published',
       publishedAt: { $lte: now },
     }).lean();
-
     if (!post) return res.status(404).json({ success: false, message: 'Post not found.' });
 
     // Track view — fire and forget, never blocks response
@@ -55,7 +52,7 @@ router.get('/:slug', async (req, res) => {
         const source  = BlogView.detectSource(referer);
         const device  = BlogView.detectDevice(ua);
         await Promise.all([
-          BlogView.create({ postId: post._id, slug: post.slug, source, device, referrer: referer.slice(0,300) }),
+          BlogView.create({ postId: post._id, slug: post.slug, source, device, referrer: referer.slice(0, 300) }),
           BlogPost.findByIdAndUpdate(post._id, { $inc: { views: 1 } }),
         ]);
       } catch (e) { console.error('View tracking error:', e.message); }
