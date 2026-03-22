@@ -428,6 +428,68 @@
 
     .loading{text-align:center;padding:2rem;color:var(--muted);font-size:.9rem;}
 
+
+    /* ── SLUG PREVIEW ── */
+    .slug-preview{font-size:.72rem;color:#0969da;margin-top:.25rem;font-family:monospace;background:#f0f5ff;padding:.25rem .5rem;border-radius:4px;display:none;}
+    .slug-preview.show{display:block;}
+
+    /* ── EDITOR FOOTER ── */
+    .editor-footer{display:flex;align-items:center;justify-content:space-between;padding:.4rem .9rem;background:#f5f3ef;border-top:1px solid var(--border);font-size:.72rem;color:var(--muted);}
+
+    /* ── TAG CHIPS ── */
+    .tags-chips-wrap{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.4rem;}
+    .tag-chip{display:inline-flex;align-items:center;gap:.25rem;padding:.18rem .6rem;background:#e8f0fe;color:#1565c0;border-radius:100px;font-size:.7rem;font-weight:600;}
+
+    /* ── PREVIEW BUTTON ── */
+    .act-preview{background:#f0f5ff;color:#1565c0;}
+
+    /* ══════════════════════════════════════════
+       ── LIGHT READING PREVIEW MODAL ──
+    ══════════════════════════════════════════ */
+    .preview-overlay{display:none;position:fixed;inset:0;z-index:600;background:rgba(4,10,20,.88);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);align-items:flex-start;justify-content:center;padding:1.5rem 1rem 4rem;overflow-y:auto;}
+    .preview-overlay.show{display:flex;}
+    .preview-modal{background:#fffef9;border-radius:18px;width:100%;max-width:760px;overflow:hidden;margin:auto;box-shadow:0 4px 8px rgba(0,0,0,.06),0 24px 60px rgba(0,0,0,.18),0 80px 140px rgba(0,0,0,.2);animation:prevIn .35s cubic-bezier(.16,1,.3,1) both;position:relative;}
+    @keyframes prevIn{from{opacity:0;transform:scale(.97) translateY(20px);}to{opacity:1;transform:none;}}
+    .preview-bar{position:sticky;top:0;left:0;right:0;z-index:10;display:flex;align-items:center;justify-content:space-between;background:rgba(255,254,249,.96);backdrop-filter:blur(12px);border-bottom:1px solid #eeebe4;padding:.75rem 1.4rem;}
+    .preview-bar-label{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#888;}
+    .preview-close{background:rgba(0,0,0,.08);border:none;border-radius:50%;width:30px;height:30px;cursor:pointer;font-size:.9rem;color:#555;display:flex;align-items:center;justify-content:center;transition:all .18s;}
+    .preview-close:hover{background:rgba(220,38,38,.12);color:#dc2626;}
+    .preview-cover{height:300px;position:relative;overflow:hidden;background:linear-gradient(135deg,#0a1e38,#1565c0);}
+    .preview-cover-fallback{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:5rem;opacity:.45;}
+    .preview-cover-overlay{position:absolute;inset:0;background:linear-gradient(0deg,rgba(4,10,20,.75) 0%,transparent 60%);}
+    .preview-cover-cat{position:absolute;bottom:1.2rem;left:1.8rem;background:rgba(21,101,192,.9);color:#fff;padding:.25rem .85rem;border-radius:100px;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;}
+    .preview-body{padding:2rem 2.6rem 2.8rem;background:#fffef9;}
+    .preview-meta{display:flex;align-items:center;gap:.9rem;margin-bottom:1rem;flex-wrap:wrap;}
+    .preview-meta-item{font-size:.72rem;color:#888;font-family:'DM Sans',sans-serif;}
+    .preview-meta-sep{width:3px;height:3px;background:#ccc;border-radius:50%;display:inline-block;margin:0 .2rem;}
+    .preview-title{font-family:'Playfair Display',serif;font-size:clamp(1.5rem,3vw,2rem);font-weight:900;line-height:1.18;letter-spacing:-.4px;color:#0d0d0d;margin-bottom:.9rem;}
+    .preview-excerpt{font-family:'Lora',Georgia,serif;font-size:.98rem;font-style:italic;color:#555;line-height:1.75;border-left:3px solid #1565c0;padding-left:1rem;margin-bottom:1.4rem;}
+    .preview-tags-wrap{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:1.4rem;}
+    .prev-tag{padding:.2rem .7rem;border-radius:100px;background:#f0f0f0;color:#555;font-size:.68rem;font-weight:600;font-family:'DM Sans',sans-serif;}
+    .preview-divider{height:1px;background:linear-gradient(90deg,transparent,#e0ddd6 30%,#e0ddd6 70%,transparent);margin:1.5rem 0;}
+    .preview-content{font-family:'Lora',Georgia,serif;font-size:1.02rem;color:#2a2a2a;line-height:1.95;max-width:650px;}
+    .preview-content *{color:inherit !important;background:transparent !important;}
+    .preview-content h2{font-family:'Playfair Display',serif !important;font-size:1.35rem;color:#0d0d0d !important;margin:2.2rem 0 .8rem;font-weight:700;padding-bottom:.4rem;border-bottom:2px solid #f0ede6;}
+    .preview-content h3{font-family:'Playfair Display',serif !important;font-size:1.1rem;color:#1a1a1a !important;margin:1.8rem 0 .5rem;font-weight:700;}
+    .preview-content p{margin-bottom:1.2rem;color:#2a2a2a !important;}
+    .preview-content strong,.preview-content b{color:#0d0d0d !important;font-weight:600;}
+    .preview-content em,.preview-content i{color:#1565c0 !important;font-style:italic;}
+    .preview-content ul,.preview-content ol{padding-left:1.6rem;margin-bottom:1.2rem;}
+    .preview-content li{margin-bottom:.5rem;color:#2a2a2a !important;line-height:1.75;}
+    .preview-content blockquote{position:relative;margin:1.8rem 0;padding:1.2rem 1.5rem 1.2rem 1.8rem;background:#faf7f0;border-radius:0 10px 10px 0;color:#444 !important;font-style:italic;}
+    .preview-content blockquote::before{content:'"';position:absolute;top:-.5rem;left:.6rem;font-family:'Playfair Display',serif;font-size:4.5rem;line-height:1;color:#e8dfc8;pointer-events:none;}
+    .preview-content blockquote::after{content:'';position:absolute;left:0;top:10px;bottom:10px;width:4px;background:linear-gradient(180deg,#e8882a,#c8620a);border-radius:0 4px 4px 0;}
+    .preview-content table{width:100%;border-collapse:separate;border-spacing:0;margin:1.8rem 0;font-family:'DM Sans',sans-serif !important;font-size:.87rem;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06);border:1px solid #e8e8e8;}
+    .preview-content table thead{background:linear-gradient(135deg,#1565c0,#1976d2);}
+    .preview-content table th{padding:.7rem 1rem;text-align:left;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#fff !important;}
+    .preview-content table td{padding:.68rem 1rem;border-top:1px solid #f0f0f0;color:#333 !important;vertical-align:top;}
+    .preview-content table tr:nth-child(even) td{background:#fafbff !important;}
+    .preview-author-card{display:flex;align-items:center;gap:1rem;padding:1.2rem;background:#f8f5ef;border-radius:12px;margin-top:2rem;}
+    .preview-author-av{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#1565c0,#42a5f5);display:flex;align-items:center;justify-content:center;font-size:.9rem;font-weight:700;color:#fff;flex-shrink:0;}
+    .preview-author-info strong{display:block;font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:700;color:#0d0d0d;}
+    .preview-author-info p{font-family:'DM Sans',sans-serif;font-size:.74rem;color:#666;line-height:1.5;}
+    .preview-admin-note{background:#fff8e8;border:1px solid #f5c26e;border-radius:8px;padding:.75rem 1rem;text-align:center;font-size:.76rem;color:#92600a;font-family:'DM Sans',sans-serif;margin-bottom:1rem;}
+
     @media(max-width:768px){
       .sidebar{transform:translateX(-100%);}
       .main{margin-left:0;}
@@ -818,7 +880,8 @@
         <!-- Title -->
         <div class="form-group form-full">
           <label>Post Title *</label>
-          <input type="text" id="blog-title" placeholder="e.g. Why Every Family Needs ₹10 Lakh Health Cover"/>
+          <input type="text" id="blog-title" placeholder="e.g. Why Every Family Needs ₹10 Lakh Health Cover" oninput="updateSlugPreview();"/>
+          <div class="slug-preview" id="slug-preview"></div>
           <span class="form-hint">Slug auto-generated from title</span>
         </div>
 
@@ -845,7 +908,7 @@
         <div class="form-group form-full">
           <label>Excerpt * <span style="font-weight:400;color:var(--muted);">(shown on blog card — max 400 chars)</span></label>
           <textarea id="blog-excerpt" placeholder="One or two sentences summarising the post…" style="min-height:68px;"></textarea>
-          <span class="form-hint" id="excerpt-count">0 / 400</span>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:.2rem;"><span class="form-hint" id="excerpt-count">0 / 400</span><span class="form-hint" id="excerpt-meta-hint" style="color:var(--green);">✓ Good for Google</span></div>
         </div>
 
         <!-- Cover image — Upload or URL -->
@@ -889,7 +952,8 @@
         <!-- Tags -->
         <div class="form-group form-full">
           <label>Tags <span style="font-weight:400;color:var(--muted);">(comma separated)</span></label>
-          <input type="text" id="blog-tags" placeholder="health insurance, family, AP"/>
+          <input type="text" id="blog-tags" placeholder="health insurance, family, AP" oninput="renderTagChips()"/>
+          <div class="tags-chips-wrap" id="tags-chips-wrap"></div>
         </div>
 
         <!-- Content editor -->
@@ -938,6 +1002,7 @@
       <div class="blog-modal-foot-left" id="blog-save-status"></div>
       <div class="blog-modal-foot-right">
         <button class="modal-cancel" onclick="closeBlogModal()">Cancel</button>
+        <button class="modal-cancel" onclick="previewBlogPost()" style="background:#f0f5ff;color:#1565c0;border-color:#c5d8f8;">👁 Preview</button>
         <button class="modal-save" id="blog-save-btn" onclick="saveBlogPost()">
           Publish Post
         </button>
@@ -955,6 +1020,42 @@
     </div>
     <div class="views-modal-body" id="views-modal-body">
       <div class="loading">Loading analytics…</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══ BLOG PREVIEW MODAL ═══ -->
+<div class="preview-overlay" id="preview-overlay" onclick="closePreview(event)">
+  <div class="preview-modal">
+    <div class="preview-bar">
+      <span class="preview-bar-label">👁 Preview — how it looks on site</span>
+      <button class="preview-close" onclick="closePreview()">✕</button>
+    </div>
+    <div class="preview-admin-note">This is a preview. The actual post may look slightly different once published.</div>
+    <div class="preview-cover" id="preview-cover-wrap">
+      <div class="preview-cover-fallback" id="preview-cover-fallback">📰</div>
+      <div class="preview-cover-overlay"></div>
+      <div class="preview-cover-cat" id="preview-cat"></div>
+    </div>
+    <div class="preview-body">
+      <div class="preview-meta">
+        <span class="preview-meta-item">📅 <span id="preview-date"></span></span>
+        <span class="preview-meta-sep"></span>
+        <span class="preview-meta-item">⏱ <span id="preview-readtime"></span></span>
+      </div>
+      <h1 class="preview-title" id="preview-title"></h1>
+      <div class="preview-excerpt" id="preview-excerpt"></div>
+      <div class="preview-tags-wrap" id="preview-tags"></div>
+      <div class="preview-divider"></div>
+      <div class="preview-content" id="preview-content"></div>
+      <div class="preview-author-card">
+        <div class="preview-author-av" id="preview-author-av">CC</div>
+        <div class="preview-author-info">
+          <strong id="preview-author-name">Cover Credit Team</strong>
+          <p>Insurance advisors serving 500+ families across AP &amp; Telangana. ₹2Cr+ claims settled.</p>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -1373,6 +1474,10 @@ function openBlogCompose() {
   document.getElementById('blog-save-status').textContent = '';
   updateExcerptCount();
   updateSaveBtnLabel();
+  setupEditorPasteHandler();
+  updateWordCount();
+  renderTagChips();
+  updateSlugPreview();
   document.getElementById('blog-overlay').classList.add('show');
   document.body.style.overflow = 'hidden';
   setTimeout(()=>document.getElementById('blog-title').focus(), 100);
@@ -2090,6 +2195,178 @@ function debounce(fn,ms) {
   let timer;
   return (...args)=>{ clearTimeout(timer); timer=setTimeout(()=>fn(...args),ms); };
 }
+
+
+// ══════════════════════════════════════════
+// ── NEW EDITOR IMPROVEMENTS ───────────────
+// ══════════════════════════════════════════
+
+// Slug preview from title
+function updateSlugPreview() {
+  const title = document.getElementById('blog-title').value.trim();
+  const el    = document.getElementById('slug-preview');
+  if (!title) { el.classList.remove('show'); el.textContent = ''; return; }
+  const slug = title.toLowerCase().replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-').replace(/-+/g, '-').slice(0, 100);
+  el.textContent = 'URL slug: /' + slug;
+  el.classList.add('show');
+}
+
+// Word count + read time in editor footer
+function updateWordCount() {
+  const text  = document.getElementById('blog-content').innerText || '';
+  const words = text.trim() ? text.trim().split(/\s+/).filter(w => w.length > 0).length : 0;
+  const mins  = Math.max(1, Math.round(words / 200));
+  const wc = document.getElementById('word-count');
+  const rt = document.getElementById('read-time-badge');
+  if (wc) wc.textContent  = words.toLocaleString() + ' words';
+  if (rt) rt.textContent  = '· ' + mins + ' min read';
+}
+
+// Excerpt length + meta description hint
+function updateExcerptCount() {
+  const len     = document.getElementById('blog-excerpt').value.length;
+  const countEl = document.getElementById('excerpt-count');
+  const metaEl  = document.getElementById('excerpt-meta-hint');
+  if (countEl) { countEl.textContent = len + ' / 400'; countEl.style.color = len > 380 ? 'var(--red)' : 'var(--muted)'; }
+  if (metaEl) {
+    if (len === 0)        { metaEl.textContent = ''; }
+    else if (len <= 155)  { metaEl.style.color = 'var(--green)';  metaEl.textContent = '✓ Perfect for Google (under 155 chars)'; }
+    else if (len <= 300)  { metaEl.style.color = 'var(--orange)'; metaEl.textContent = '⚠ Google trims after 155 chars'; }
+    else                  { metaEl.style.color = 'var(--muted)';  metaEl.textContent = ''; }
+  }
+}
+
+// Tag chips live preview
+function renderTagChips() {
+  const raw  = document.getElementById('blog-tags').value;
+  const tags = raw.split(',').map(t => t.trim()).filter(Boolean);
+  const wrap = document.getElementById('tags-chips-wrap');
+  if (wrap) wrap.innerHTML = tags.map(t => '<span class="tag-chip">' + esc(t) + '</span>').join('');
+}
+
+// Setup paste handler — strips Word/Docs/Gmail inline colours on paste
+function setupEditorPasteHandler() {
+  const editor = document.getElementById('blog-content');
+  if (!editor) return;
+  editor.removeEventListener('paste', handleEditorPaste);
+  editor.addEventListener('paste', handleEditorPaste);
+  editor.removeEventListener('input', updateWordCount);
+  editor.addEventListener('input', updateWordCount);
+}
+
+function handleEditorPaste(e) {
+  e.preventDefault();
+  const html = e.clipboardData.getData('text/html');
+  const text = e.clipboardData.getData('text/plain');
+  if (html) {
+    let clean = html;
+    clean = clean.replace(/<o:p[^>]*>[\s\S]*?<\/o:p>/gi, '');
+    clean = clean.replace(/<!--[\s\S]*?-->/g, '');
+    clean = clean.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+    clean = clean.replace(/\s*style="([^"]*)"/gi, function(match, styles) {
+      const s = styles
+        .replace(/color\s*:[^;]+;?/gi, '')
+        .replace(/background(-color)?\s*:[^;]+;?/gi, '')
+        .replace(/font-family\s*:[^;]+;?/gi, '')
+        .replace(/font-size\s*:[^;]+;?/gi, '')
+        .replace(/mso-[^:]+:[^;]+;?/gi, '')
+        .trim().replace(/;+$/, '');
+      return s ? ' style="' + s + '"' : '';
+    });
+    clean = clean.replace(/<span\s*>([\s\S]*?)<\/span>/gi, '$1');
+    clean = clean.replace(/<span style="">([\s\S]*?)<\/span>/gi, '$1');
+    document.execCommand('insertHTML', false, clean);
+  } else if (text) {
+    const escaped = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const withBreaks = escaped.replace(/\n\n+/g, '</p><p>').replace(/\n/g, '<br>');
+    document.execCommand('insertHTML', false, '<p>' + withBreaks + '</p>');
+  }
+  updateWordCount();
+}
+
+// Insert table button
+function edInsertTable() {
+  const rows = parseInt(prompt('Rows (including header row):', '4')) || 4;
+  const cols = parseInt(prompt('Columns:', '3')) || 3;
+  let html = '<table><thead><tr>';
+  for (let c = 0; c < cols; c++) html += '<th>Header ' + (c + 1) + '</th>';
+  html += '</tr></thead><tbody>';
+  for (let r = 0; r < rows - 1; r++) {
+    html += '<tr>';
+    for (let c = 0; c < cols; c++) html += '<td>' + (c === 0 ? 'Row ' + (r + 1) : '') + '</td>';
+    html += '</tr>';
+  }
+  html += '</tbody></table><p></p>';
+  document.getElementById('blog-content').focus();
+  document.execCommand('insertHTML', false, html);
+  updateWordCount();
+}
+
+// ══════════════════════════════════════════
+// ── BLOG PREVIEW MODAL ────────────────────
+// ══════════════════════════════════════════
+const BLOG_CAT_PREVIEW = {
+  health:  { label:'Health Insurance', icon:'🏥' },
+  life:    { label:'Life Insurance',   icon:'❤️' },
+  vehicle: { label:'Vehicle',          icon:'🚗' },
+  loans:   { label:'Loans & Finance',  icon:'🏠' },
+  tips:    { label:'Insurance Tips',   icon:'💡' },
+  news:    { label:'Industry News',    icon:'📰' },
+  guides:  { label:'Guides',           icon:'📖' },
+};
+
+function previewBlogPost() {
+  const title    = document.getElementById('blog-title').value.trim() || '(No title yet)';
+  const excerpt  = document.getElementById('blog-excerpt').value.trim() || '';
+  const content  = document.getElementById('blog-content').innerHTML || '';
+  const coverUrl = document.getElementById('blog-cover-url').value.trim() || document.getElementById('blog-cover').value.trim() || '';
+  const cat      = document.getElementById('blog-category').value || 'health';
+  const author   = document.getElementById('blog-author').value.trim() || 'Cover Credit Team';
+  const tags     = document.getElementById('blog-tags').value.split(',').map(t => t.trim()).filter(Boolean);
+  const catInfo  = BLOG_CAT_PREVIEW[cat] || { icon:'📄', label: cat };
+
+  // Text content
+  document.getElementById('preview-title').textContent   = title;
+  document.getElementById('preview-excerpt').textContent = excerpt;
+  document.getElementById('preview-content').innerHTML   = content;
+  document.getElementById('preview-cat').textContent     = catInfo.icon + ' ' + catInfo.label;
+  document.getElementById('preview-author-name').textContent = author;
+  document.getElementById('preview-author-av').textContent   = author.split(' ').map(function(w){return w[0];}).slice(0,2).join('').toUpperCase();
+  document.getElementById('preview-date').textContent    = new Date().toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'});
+
+  const words = (document.getElementById('blog-content').innerText || '').trim().split(/\s+/).filter(function(w){return w.length>0;}).length;
+  document.getElementById('preview-readtime').textContent = Math.max(1, Math.round(words / 200)) + ' min read';
+
+  document.getElementById('preview-tags').innerHTML = tags.map(function(t){ return '<span class="prev-tag">' + esc(t) + '</span>'; }).join('');
+
+  // Cover image
+  const wrapEl = document.getElementById('preview-cover-wrap');
+  const fb     = document.getElementById('preview-cover-fallback');
+  wrapEl.querySelectorAll('img.prev-img').forEach(function(el){el.remove();});
+  if (coverUrl) {
+    const img     = document.createElement('img');
+    img.className = 'prev-img';
+    img.src       = coverUrl;
+    img.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:brightness(.88);';
+    img.onerror   = function(){ img.remove(); fb.style.display = 'flex'; fb.textContent = catInfo.icon; };
+    wrapEl.insertBefore(img, wrapEl.firstChild);
+    fb.style.display = 'none';
+  } else {
+    fb.style.display = 'flex';
+    fb.textContent   = catInfo.icon;
+  }
+
+  document.getElementById('preview-overlay').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+function closePreview(e) {
+  if (!e || e.target === document.getElementById('preview-overlay')) {
+    document.getElementById('preview-overlay').classList.remove('show');
+    document.body.style.overflow = '';
+  }
+}
+
 </script>
 </body>
 </html>
