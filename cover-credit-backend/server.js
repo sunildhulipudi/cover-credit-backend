@@ -95,15 +95,18 @@ function startReminderChecker() {
 }
 
 // ── API Routes ────────────────────────────────────────────
-app.use('/api/contact',      formLimiter, require('./routes/contact'));
-app.use('/api/book',         formLimiter, require('./routes/book'));
-app.use('/api/admin/upload', require('./routes/upload'));
-app.use('/api/admin/blog',   require('./routes/adminBlog'));
-app.use('/api/admin',        require('./routes/admin'));
+app.use('/api/contact',       formLimiter, require('./routes/contact'));
+app.use('/api/book',          formLimiter, require('./routes/book'));
+app.use('/api/tax-enquiry',   formLimiter, require('./routes/taxEnquiry'));  // Tax services popup
+app.use('/api/admin/upload',  require('./routes/upload'));
+app.use('/api/admin/blog',    require('./routes/adminBlog'));
+app.use('/api/admin/policy',  require('./routes/adminPolicy'));               // Policy portal admin
+app.use('/api/admin',         require('./routes/admin'));
 // Blog public routes get their own generous limiter (not the global 100/15min cap)
-app.use('/api/blog',         blogLimiter, require('./routes/blog'));
-app.use('/api/track',        globalLimiter, require('./routes/track'));
-app.use('/api/auth',         require('./routes/auth'));
+app.use('/api/blog',          blogLimiter, require('./routes/blog'));
+app.use('/api/policy',        require('./routes/policy'));                    // Policy public lookup
+app.use('/api/track',         globalLimiter, require('./routes/track'));
+app.use('/api/auth',          require('./routes/auth'));
 
 // ── Health Check ─────────────────────────────────────────
 app.get('/api/health', (req, res) => {
@@ -188,32 +191,3 @@ app.listen(PORT, () => {
   console.log(`📊  Admin panel: http://localhost:${PORT}/admin`);
   console.log(`🔗  API health:  http://localhost:${PORT}/api/health`);
 });
-
-
-// ============================================================
-// ADD THESE 2 LINES TO server.js
-// Place them alongside the other app.use routes
-// ============================================================
-
-// Public policy lookup (no auth required — returns safe data only)
-app.use('/api/policy',        require('./routes/policy'));
-
-// Admin policy management (protected)
-app.use('/api/admin/policy',  require('./routes/adminPolicy'));
-
-// ============================================================
-// FULL CONTEXT — where to insert in your server.js:
-// ============================================================
-//
-// app.use('/api/contact',      formLimiter, require('./routes/contact'));
-// app.use('/api/book',         formLimiter, require('./routes/book'));
-// app.use('/api/admin/upload', require('./routes/upload'));
-// app.use('/api/admin/blog',   require('./routes/adminBlog'));
-// app.use('/api/admin/policy', require('./routes/adminPolicy'));   ← ADD THIS
-// app.use('/api/admin',        require('./routes/admin'));
-// app.use('/api/blog',         blogLimiter, require('./routes/blog'));
-// app.use('/api/policy',       require('./routes/policy'));        ← ADD THIS
-// app.use('/api/track',        globalLimiter, require('./routes/track'));
-// app.use('/api/auth',         require('./routes/auth'));
-//
-// ============================================================
