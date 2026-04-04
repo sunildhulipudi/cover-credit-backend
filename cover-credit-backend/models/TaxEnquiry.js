@@ -69,10 +69,20 @@ const taxEnquirySchema = new mongoose.Schema(
     },
 
     // ── Internal admin fields ──────────────────────────────
+    // Single latest admin note (shown in table)
     adminNotes: {
       type: String,
       trim: true,
       default: '',
+    },
+
+    // Timestamped note log (like callNotes in Booking)
+    noteLog: {
+      type: [{
+        text:     { type: String, required: true },
+        addedAt:  { type: Date, default: Date.now },
+      }],
+      default: [],
     },
     assignedTo: {
       type: String,
