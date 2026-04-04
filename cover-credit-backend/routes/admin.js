@@ -2,7 +2,7 @@
 // ROUTE: /api/admin
 // Protected admin endpoints — all require valid JWT
 // Updated for new department-based booking form
-// ===========================================================
+// ============================================================
 
 const express  = require('express');
 const router   = express.Router();
@@ -347,7 +347,7 @@ router.get('/tax-enquiries', async (req, res) => {
 // PATCH /api/admin/tax-enquiries/:id — update status, adminNotes, assignedTo
 router.patch('/tax-enquiries/:id', async (req, res) => {
   try {
-    const allowed = ['status', 'adminNotes', 'assignedTo'];
+    const allowed = ['status', 'adminNotes', 'assignedTo', 'service'];
     const update  = {};
     allowed.forEach(f => { if (req.body[f] !== undefined) update[f] = req.body[f]; });
 
@@ -369,6 +369,30 @@ router.delete('/tax-enquiries/:id', async (req, res) => {
     res.json({ success: true, message: 'Deleted.' });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Delete failed.' });
+  }
+});
+
+// POST /api/admin/tax-enquiries/:id/note — add timestamped note to log
+router.post('/tax-enquiries/:id/note', async (req, res) => {
+  try {
+    const { text } = req.body;
+    if (!text || !String(text).trim()) {
+      return res.status(400).json({ success: false, message: 'Note text is required.' });
+    }
+    const newNote = { text: String(text).trim(), addedAt: new Date() };
+    const enquiry = await TaxEnquiry.findByIdAndUpdate(
+      req.params.id,
+      {
+        $push: { noteLog: newNote },
+        $set:  { adminNotes: String(text).trim() }, // keep latest as summary
+      },
+      { new: true }
+    );
+    if (!enquiry) return res.status(404).json({ success: false, message: 'Not found.' });
+    res.json({ success: true, data: enquiry });
+  } catch (err) {
+    console.error('Add tax note error:', err);
+    res.status(500).json({ success: false, message: 'Failed to save note.' });
   }
 });
 
