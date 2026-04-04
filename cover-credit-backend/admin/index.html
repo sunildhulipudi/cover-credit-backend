@@ -810,18 +810,15 @@
       <!-- ══ TAX ENQUIRIES PANEL ══ -->
       <div class="panel" id="panel-taxenquiries">
         <!-- Chart strip above table -->
-        <div style="display:grid;grid-template-columns:auto 1fr;gap:1.2rem;align-items:center;
-          background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);
-          border-radius:14px;padding:1rem 1.4rem;margin-bottom:1rem;">
-          <canvas id="tax-chart-canvas" width="120" height="120" style="border-radius:50%;"></canvas>
-          <div>
-            <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;
-              color:rgba(255,255,255,.3);margin-bottom:.5rem;">Enquiries by Service</div>
-            <div id="tax-chart-legend"></div>
+        <div style="display:grid;grid-template-columns:auto 1fr;gap:1.2rem;align-items:start;
+          background:var(--white);border:1.5px solid var(--border);
+          border-radius:14px;padding:1.2rem 1.6rem;margin-bottom:1rem;box-shadow:0 1px 4px rgba(0,0,0,.04);">
+          <div id="tax-chart-canvas" style="flex:1;">
+            <div style="font-size:.68rem;color:var(--muted);font-style:italic;">Loading chart…</div>
           </div>
         </div>
         <!-- Stats strip -->
-        <div id="tax-stats-strip" style="display:flex;gap:.8rem;margin-bottom:1rem;flex-wrap:wrap;"></div>
+        <div id="tax-stats-strip" style="display:flex;gap:.8rem;margin-bottom:1rem;flex-wrap:wrap;"><div style="font-size:.78rem;color:var(--muted);">Loading…</div></div>
         <div class="panel-header">
           <span class="panel-title">Tax Enquiries</span>
           <div class="controls">
@@ -1239,7 +1236,7 @@ const panelTitles = {
   dashboard:'Dashboard', bookings:'Consultation Bookings',
   contacts:'Contact Submissions', blog:'Blog Posts',
   analytics:'Site Analytics',
-  taxenquiries: 'Tax Enquiries' };
+, taxenquiries: 'Tax Enquiries' };
 
 function showPanel(name) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
@@ -1883,7 +1880,7 @@ function closeModal(e) {
     document.getElementById('modal-overlay').classList.remove('show');
 }
 
-async function saveEdit() {
+async function _taxOrigSaveEdit() {
   const status  = document.getElementById('modal-status').value;
   const path    = editType==='booking' ? `/admin/bookings/${editId}` : `/admin/contacts/${editId}`;
   const payload = { status };
@@ -2478,24 +2475,54 @@ function closePreview(e) {
 }
 
 
+
 // ══════════════════════════════════════════════════════════
-// TAX ENQUIRIES JS
+// TAX ENQUIRIES — Full JS
 // ══════════════════════════════════════════════════════════
+
 const TAX_STATUS_LABELS = {
-  'new':'🆕 New','contacted':'📞 Contacted','docs-received':'📁 Docs Received',
-  'in-progress':'⚙️ In Progress','query':'❓ Query','quote-sent':'💰 Quote Sent',
-  'payment-pending':'⏳ Payment Pending','payment-done':'✅ Payment Done',
-  'filed':'🏛️ Filed','completed':'🎉 Completed',
-  'cancelled':'❌ Cancelled','no-response':'🔇 No Response',
-};
-const TAX_STATUS_COLORS = {
-  'new':'#f59e0b','contacted':'#60a5fa','docs-received':'#818cf8',
-  'in-progress':'#34d399','query':'#fb923c','quote-sent':'#a78bfa',
-  'payment-pending':'#fbbf24','payment-done':'#4ade80',
-  'filed':'#22d3ee','completed':'#4ade80',
-  'cancelled':'#f87171','no-response':'#6b7280',
+  'new':             '🆕 New',
+  'contacted':       '📞 Contacted',
+  'docs-received':   '📁 Docs Received',
+  'in-progress':     '⚙️ In Progress',
+  'query':           '❓ Query',
+  'quote-sent':      '💰 Quote Sent',
+  'payment-pending': '⏳ Payment Pending',
+  'payment-done':    '✅ Payment Done',
+  'filed':           '🏛️ Filed',
+  'completed':       '🎉 Completed',
+  'cancelled':       '❌ Cancelled',
+  'no-response':     '🔇 No Response',
 };
 
+// Light-theme friendly status badge colors (text on white bg)
+const TAX_STATUS_BADGE = {
+  'new':             { bg:'#fff7e6', color:'#b45309',  border:'#fbbf24' },
+  'contacted':       { bg:'#eff6ff', color:'#1d4ed8',  border:'#93c5fd' },
+  'docs-received':   { bg:'#f5f3ff', color:'#6d28d9',  border:'#c4b5fd' },
+  'in-progress':     { bg:'#ecfdf5', color:'#065f46',  border:'#6ee7b7' },
+  'query':           { bg:'#fff7ed', color:'#c2410c',  border:'#fdba74' },
+  'quote-sent':      { bg:'#fdf4ff', color:'#7e22ce',  border:'#d8b4fe' },
+  'payment-pending': { bg:'#fffbeb', color:'#92400e',  border:'#fcd34d' },
+  'payment-done':    { bg:'#f0fdf4', color:'#166534',  border:'#86efac' },
+  'filed':           { bg:'#ecfeff', color:'#155e75',  border:'#67e8f9' },
+  'completed':       { bg:'#f0fdf4', color:'#14532d',  border:'#4ade80' },
+  'cancelled':       { bg:'#fef2f2', color:'#991b1b',  border:'#fca5a5' },
+  'no-response':     { bg:'#f9fafb', color:'#374151',  border:'#d1d5db' },
+};
+
+const TAX_SERVICES = [
+  'Tax & Compliance',
+  'ITR Filing',
+  'GST Returns',
+  'GST Registration',
+  'Company Registration',
+  'Firm Registration',
+  'Annual Filings',
+  'Tax Audit',
+];
+
+// ── Load + render table ───────────────────────────────────
 async function loadTaxEnquiries(page = currentPage.taxenquiries || 1) {
   currentPage.taxenquiries = page;
   const search  = document.getElementById('tax-search')?.value  || '';
@@ -2508,7 +2535,8 @@ async function loadTaxEnquiries(page = currentPage.taxenquiries || 1) {
 
   const tbody = document.getElementById('tax-body');
   if (!r.data.length) {
-    tbody.innerHTML = `<tr><td colspan="9"><div class="empty"><div class="empty-icon">📭</div><p>No tax enquiries found</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9"><div class="empty">
+      <div class="empty-icon">📭</div><p>No tax enquiries found</p></div></td></tr>`;
     document.getElementById('tax-pagination').innerHTML = '';
     return;
   }
@@ -2517,32 +2545,55 @@ async function loadTaxEnquiries(page = currentPage.taxenquiries || 1) {
   r.data.forEach(t => { window._taxMap[t._id] = t; });
 
   tbody.innerHTML = r.data.map(t => {
-    const statusColor = TAX_STATUS_COLORS[t.status] || '#aaa';
-    const statusLabel = TAX_STATUS_LABELS[t.status] || t.status;
+    const badge = TAX_STATUS_BADGE[t.status] || { bg:'#f3f4f6', color:'#374151', border:'#d1d5db' };
+    const label = TAX_STATUS_LABELS[t.status] || t.status;
     const waNum = t.phone.replace(/\D/g, '');
-    const opts  = Object.entries(TAX_STATUS_LABELS).map(([v,l]) =>
-      `<option value="${v}" ${t.status===v?'selected':''}>${l}</option>`).join('');
+
+    // Status badge styled for light bg
+    const statusBadgeHtml = `
+      <span style="display:inline-flex;align-items:center;gap:.3rem;
+        background:${badge.bg};color:${badge.color};border:1.5px solid ${badge.border};
+        border-radius:100px;padding:.25rem .7rem;font-size:.73rem;font-weight:700;
+        white-space:nowrap;cursor:pointer;" onclick="openTaxEdit('${t._id}')">
+        ${label}
+      </span>`;
+
+    // Latest admin note (last in log, or adminNotes field)
+    const latestNote = (t.noteLog && t.noteLog.length)
+      ? t.noteLog[t.noteLog.length - 1]
+      : null;
+    const noteDisplay = latestNote
+      ? `<span style="font-size:.78rem;color:var(--primary);font-weight:600;display:block;
+          line-height:1.4;" title="${esc(latestNote.text)}">${esc(latestNote.text.substring(0,50))}${latestNote.text.length>50?'…':''}</span>
+         <span style="font-size:.68rem;color:var(--muted);">${fmtDate(latestNote.addedAt)}</span>`
+      : (t.adminNotes
+          ? `<span style="font-size:.78rem;color:var(--primary);font-weight:600;" title="${esc(t.adminNotes)}">${esc(t.adminNotes.substring(0,50))}${t.adminNotes.length>50?'…':''}</span>`
+          : `<span style="color:var(--muted);font-size:.76rem;font-style:italic;">—</span>`);
+
+    // Client notes cell
+    const clientNotes = t.notes
+      ? `<span style="font-size:.78rem;color:#1d4ed8;font-weight:500;display:block;line-height:1.4;
+          cursor:help;" title="${esc(t.notes)}">${esc(t.notes.substring(0,55))}${t.notes.length>55?'…':''}</span>`
+      : `<span style="color:var(--muted);font-size:.76rem;font-style:italic;">—</span>`;
+
     return `
     <tr>
-      <td class="td-name"><strong>${esc(t.name)}</strong></td>
-      <td class="td-phone"><a href="tel:${t.phone}" style="font-weight:700;">${t.phone}</a></td>
-      <td style="font-size:.85rem;color:#93c5fd;font-weight:600;">${esc(t.city||'—')}</td>
-      <td style="font-size:.83rem;font-weight:700;color:#fcd34d;">${esc(t.service)}</td>
-      <td style="max-width:160px;font-size:.8rem;color:rgba(255,255,255,.6);">
-        ${t.notes ? `<span title="${esc(t.notes)}">${esc(t.notes.substring(0,55))}${t.notes.length>55?'…':''}</span>` : '<span style="opacity:.35">—</span>'}</td>
+      <td class="td-name">${esc(t.name)}</td>
+      <td class="td-phone"><a href="tel:${t.phone}" style="font-weight:700;color:var(--accent);">${t.phone}</a></td>
+      <td style="font-size:.84rem;font-weight:600;color:#1d4ed8;">${esc(t.city||'—')}</td>
       <td>
-        <select style="background:rgba(0,0,0,.35);color:${statusColor};border:1.5px solid ${statusColor}55;
-          border-radius:7px;padding:.28rem .5rem;font-size:.74rem;font-weight:700;cursor:pointer;min-width:130px;"
-          onchange="updateTaxStatus('${t._id}',this.value)">${opts}</select>
+        <span style="display:inline-block;background:#fff7e6;color:#b45309;border:1.5px solid #fbbf24;
+          border-radius:6px;padding:.2rem .6rem;font-size:.78rem;font-weight:700;">${esc(t.service)}</span>
       </td>
-      <td style="max-width:140px;font-size:.8rem;color:rgba(255,255,255,.5);">
-        ${t.adminNotes ? `<span title="${esc(t.adminNotes)}">${esc(t.adminNotes.substring(0,45))}${t.adminNotes.length>45?'…':''}</span>` : '<span style="opacity:.3">—</span>'}</td>
+      <td style="max-width:160px;">${clientNotes}</td>
+      <td>${statusBadgeHtml}</td>
+      <td style="max-width:160px;">${noteDisplay}</td>
       <td class="td-date">${fmtDate(t.createdAt)}</td>
       <td>
         <div class="actions">
-          <a href="tel:${t.phone}" class="act-btn act-call" title="Call now">📞</a>
+          <a href="tel:${t.phone}" class="act-btn act-call" title="Call">📞</a>
           <a href="https://wa.me/${waNum}" target="_blank" class="act-btn"
-            style="background:rgba(37,211,102,.15);color:#4ade80;" title="WhatsApp">💬</a>
+            style="background:rgba(37,211,102,.12);color:#15803d;border:1px solid #86efac;" title="WhatsApp">💬</a>
           <button class="act-btn act-edit" onclick="openTaxEdit('${t._id}')">✏️ Edit</button>
           <button class="act-btn act-delete" onclick="delTaxEnquiry('${t._id}')">🗑️</button>
         </div>
@@ -2553,183 +2604,261 @@ async function loadTaxEnquiries(page = currentPage.taxenquiries || 1) {
   renderPagination('tax-pagination', r.pagination, loadTaxEnquiries);
 }
 
-async function updateTaxStatus(id, newStatus) {
-  const r = await apiFetch('/admin/tax-enquiries/' + id, 'PATCH', { status: newStatus });
-  if (r.success) showToast('Status → ' + (TAX_STATUS_LABELS[newStatus]||newStatus));
-  else showToast('Update failed', 'error');
-}
-
-// ── openTaxEdit — uses the existing real modal (modal-overlay) ──────────────
+// ── Open Edit Modal ───────────────────────────────────────
 function openTaxEdit(id) {
   const t = (window._taxMap||{})[id];
-  if (!t) { showToast('Please refresh the page and try again.', 'error'); return; }
+  if (!t) { showToast('Refresh and try again.', 'error'); return; }
 
-  // Reuse existing modal structure — set title
   document.getElementById('modal-title').textContent = '📋 Edit Tax Enquiry';
 
-  // Contact info section — show all client fields, bold values
+  // ── Section 1: Client info (read-only) ──
   document.getElementById('modal-contact-info').innerHTML = `
-    <p><strong>Name:</strong> <span style="font-weight:700;color:var(--primary);">${esc(t.name)}</span></p>
-    <p><strong>Phone:</strong> <a href="tel:${t.phone}" style="color:var(--accent);font-weight:700;">${t.phone}</a></p>
-    ${t.email ? `<p><strong>Email:</strong> <a href="mailto:${t.email}" style="color:var(--accent);">${esc(t.email)}</a></p>` : ''}
-    <p><strong>City:</strong> <span style="font-weight:700;">${esc(t.city||'—')}</span></p>
-    <p><strong>Service Requested:</strong> <span style="font-weight:700;color:#f59e0b;">${esc(t.service)}</span></p>
-    <p><strong>Submitted:</strong> <span style="font-weight:600;">${fmtDate(t.createdAt)}</span></p>`;
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem .8rem;">
+      <div>
+        <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:.2rem;">Name</div>
+        <div style="font-weight:700;font-size:.95rem;color:var(--primary);">${esc(t.name)}</div>
+      </div>
+      <div>
+        <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:.2rem;">Phone</div>
+        <div><a href="tel:${t.phone}" style="font-weight:700;font-size:.95rem;color:var(--accent);">${t.phone}</a></div>
+      </div>
+      <div>
+        <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:.2rem;">City</div>
+        <div style="font-weight:700;color:#1d4ed8;">${esc(t.city||'—')}</div>
+      </div>
+      <div>
+        <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:.2rem;">Submitted</div>
+        <div style="font-weight:600;font-size:.85rem;">${fmtDate(t.createdAt)}</div>
+      </div>
+      ${t.email?`<div style="grid-column:1/-1;">
+        <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:.2rem;">Email</div>
+        <div><a href="mailto:${t.email}" style="color:var(--accent);">${esc(t.email)}</a></div>
+      </div>`:''}
+    </div>`;
 
-  // Details section — show client notes prominently
+  // ── Section 2: Client notes (read-only, full text, highlighted box) ──
   document.getElementById('modal-details-section').style.display = 'block';
-  document.getElementById('modal-details-title').textContent = '📝 Client Notes';
+  document.getElementById('modal-details-title').textContent = '💬 Client Notes (from enquiry form)';
   document.getElementById('modal-details-body').innerHTML = t.notes
-    ? `<p style="font-size:.9rem;font-weight:600;color:var(--text);line-height:1.65;">${esc(t.notes)}</p>`
-    : `<p style="color:var(--muted);font-size:.84rem;font-style:italic;">No notes provided by client.</p>`;
+    ? `<p style="font-size:.9rem;font-weight:600;color:var(--primary);line-height:1.7;
+        background:#eff6ff;border-left:4px solid #3b82f6;padding:.8rem 1rem;border-radius:0 8px 8px 0;
+        margin:0;">${esc(t.notes)}</p>`
+    : `<p style="color:var(--muted);font-size:.85rem;font-style:italic;margin:0;">No notes provided by client.</p>`;
 
-  // Schedule section — hide (not needed for tax)
+  // ── Section 3: Schedule (hidden for tax) ──
   document.getElementById('modal-schedule-section').style.display = 'none';
   document.getElementById('modal-scheduled').value = '';
 
-  // Status — populate with tax statuses
-  document.getElementById('modal-status').innerHTML =
-    Object.entries(TAX_STATUS_LABELS).map(([v,l]) =>
-      `<option value="${v}" ${t.status===v?'selected':''}>${l}</option>`).join('');
-
-  // Show admin notes section, hide call log
+  // ── Section 4: Editable fields - Service + Status ──
+  // Insert editable fields between details and call log
+  // We use the modal-adminnotes-section for this
   document.getElementById('modal-callnotes-section').style.display = 'none';
   document.getElementById('modal-adminnotes-section').style.display = 'block';
-  document.getElementById('modal-notes').value = t.adminNotes || '';
 
-  // Store current tax enquiry id so saveEdit knows what to save
-  window._editingTaxId = t._id;
+  // Override the admin notes section with our full edit UI
+  document.getElementById('modal-adminnotes-section').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-top:1rem;margin-bottom:1rem;">
+      <div>
+        <label style="font-size:.8rem;font-weight:700;color:var(--primary);">Service Requested</label>
+        <select id="te-service" style="width:100%;margin-top:.3rem;">
+          ${TAX_SERVICES.map(s => `<option value="${s}" ${t.service===s?'selected':''}>${s}</option>`).join('')}
+        </select>
+      </div>
+      <div>
+        <label style="font-size:.8rem;font-weight:700;color:var(--primary);">Status</label>
+        <select id="te-status" style="width:100%;margin-top:.3rem;">
+          ${Object.entries(TAX_STATUS_LABELS).map(([v,l]) =>
+            `<option value="${v}" ${t.status===v?'selected':''}>${l}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+
+    <div style="margin-bottom:.6rem;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;">
+        <label style="font-size:.8rem;font-weight:700;color:var(--primary);margin:0;">
+          📝 Admin Note Log
+        </label>
+        <span style="font-size:.72rem;color:var(--muted);">Each note saved separately with timestamp</span>
+      </div>
+
+      <!-- Note log history -->
+      <div id="te-note-log" style="max-height:160px;overflow-y:auto;border:1.5px solid var(--border);
+        border-radius:8px 8px 0 0;background:#f8f6f1;padding:.7rem .9rem;
+        border-bottom:none;min-height:48px;">
+        ${(() => {
+          const log = (t.noteLog||[]).slice().reverse(); // newest first
+          if (!log.length && !t.adminNotes) return '<div style="color:var(--muted);font-size:.82rem;font-style:italic;">No notes yet.</div>';
+          if (!log.length && t.adminNotes) {
+            return `<div style="padding:.4rem 0;border-bottom:1px solid var(--border);padding-bottom:.4rem;">
+              <div style="font-size:.85rem;font-weight:600;color:var(--primary);">${esc(t.adminNotes)}</div>
+              <div style="font-size:.7rem;color:var(--muted);margin-top:.2rem;">Previous note</div>
+            </div>`;
+          }
+          return log.map((n,i) => `
+            <div style="padding:.4rem 0;${i<log.length-1?'border-bottom:1px solid var(--border);padding-bottom:.5rem;margin-bottom:.4rem;':''}">
+              <div style="font-size:.85rem;font-weight:600;color:var(--primary);line-height:1.5;">${esc(n.text)}</div>
+              <div style="font-size:.7rem;color:var(--muted);margin-top:.2rem;">🕐 ${fmtDate(n.addedAt)}${i===0?'<span style="background:#dcfce7;color:#166534;font-size:.65rem;font-weight:700;padding:.1rem .4rem;border-radius:100px;margin-left:.4rem;">Latest</span>':''}</div>
+            </div>`).join('');
+        })()}
+      </div>
+
+      <!-- New note input -->
+      <div style="border:1.5px solid var(--border);border-top:none;border-radius:0 0 8px 8px;
+        background:#fff;padding:.7rem .9rem;">
+        <textarea id="te-new-note" rows="2"
+          placeholder="Add a note… (e.g. Called client, waiting for Form 16)"
+          style="width:100%;border:none;outline:none;font-family:inherit;
+          font-size:.88rem;resize:none;background:transparent;color:var(--text);"></textarea>
+        <div style="display:flex;justify-content:flex-end;margin-top:.4rem;">
+          <button onclick="saveTaxNote('${t._id}')"
+            style="background:var(--primary);color:#fff;border:none;border-radius:7px;
+            padding:.42rem .95rem;font-size:.82rem;font-weight:700;cursor:pointer;
+            display:inline-flex;align-items:center;gap:.35rem;transition:background .18s;">
+            💾 Save Note
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Clear the modal-status select (it'll be unused for tax but keep it hidden)
+  document.getElementById('modal-status').innerHTML = '';
+
   editType = 'taxenquiry';
   editId   = t._id;
-
   document.getElementById('modal-overlay').classList.add('show');
 }
 
-// ── saveEdit is already used for bookings/contacts — extend it for tax ──────
-// We patch the existing saveEdit by checking editType
-const _origSaveEdit = typeof saveEdit === 'function' ? saveEdit : null;
-
-async function saveEdit() {
-  // If editing a tax enquiry, use tax-specific save
-  if (editType === 'taxenquiry') {
-    const status     = document.getElementById('modal-status').value;
-    const adminNotes = (document.getElementById('modal-notes').value||'').trim();
-    const r = await apiFetch('/admin/tax-enquiries/' + editId, 'PATCH', { status, adminNotes });
-    if (r.success) {
-      showToast('Tax enquiry saved ✓');
-      document.getElementById('modal-overlay').classList.remove('show');
-      loadTaxEnquiries();
-      // update in-memory map
-      if (window._taxMap && window._taxMap[editId]) {
-        window._taxMap[editId].status     = status;
-        window._taxMap[editId].adminNotes = adminNotes;
-      }
-    } else {
-      showToast('Save failed — ' + (r.message||'try again'), 'error');
+// ── Save note (timestamped) ───────────────────────────────
+async function saveTaxNote(id) {
+  const text = (document.getElementById('te-new-note')?.value||'').trim();
+  if (!text) { showToast('Please write a note before saving.', 'error'); return; }
+  const r = await apiFetch('/admin/tax-enquiries/' + id + '/note', 'POST', { text });
+  if (r.success) {
+    showToast('Note saved ✓');
+    // Update in-memory and re-render note log
+    if (window._taxMap && window._taxMap[id]) {
+      window._taxMap[id] = r.data;
     }
-    return;
-  }
-  // Otherwise call original save logic
-  if (_origSaveEdit) _origSaveEdit();
+    document.getElementById('te-new-note').value = '';
+    // Re-render the note log in place
+    const log = (r.data.noteLog||[]).slice().reverse();
+    document.getElementById('te-note-log').innerHTML = log.map((n,i) => `
+      <div style="padding:.4rem 0;${i<log.length-1?'border-bottom:1px solid var(--border);padding-bottom:.5rem;margin-bottom:.4rem;':''}">
+        <div style="font-size:.85rem;font-weight:600;color:var(--primary);line-height:1.5;">${esc(n.text)}</div>
+        <div style="font-size:.7rem;color:var(--muted);margin-top:.2rem;">🕐 ${fmtDate(n.addedAt)}${i===0?'<span style="background:#dcfce7;color:#166534;font-size:.65rem;font-weight:700;padding:.1rem .4rem;border-radius:100px;margin-left:.4rem;">Latest</span>':''}</div>
+      </div>`).join('');
+    // Reload table to update "latest note" column
+    loadTaxEnquiries();
+  } else showToast('Failed to save note', 'error');
 }
 
+// ── Save status + service changes ─────────────────────────
+async function saveEdit() {
+  if (editType === 'taxenquiry') {
+    const status  = document.getElementById('te-status')?.value;
+    const service = document.getElementById('te-service')?.value;
+    if (!status) { showToast('Please select a status.', 'error'); return; }
+    const r = await apiFetch('/admin/tax-enquiries/' + editId, 'PATCH', { status, service });
+    if (r.success) {
+      showToast('Saved ✓');
+      document.getElementById('modal-overlay').classList.remove('show');
+      if (window._taxMap && window._taxMap[editId]) {
+        window._taxMap[editId].status  = status;
+        window._taxMap[editId].service = service;
+      }
+      loadTaxEnquiries();
+    } else showToast('Save failed — ' + (r.message||'try again'), 'error');
+    return;
+  }
+  // original saveEdit for bookings/contacts
+  if (typeof _taxOrigSaveEdit === 'function') _taxOrigSaveEdit();
+}
+
+// ── Update status inline from table ──────────────────────
+async function updateTaxStatus(id, newStatus) {
+  const r = await apiFetch('/admin/tax-enquiries/' + id, 'PATCH', { status: newStatus });
+  if (r.success) {
+    showToast('Status → ' + (TAX_STATUS_LABELS[newStatus]||newStatus));
+    if (window._taxMap && window._taxMap[id]) window._taxMap[id].status = newStatus;
+  } else showToast('Update failed', 'error');
+}
+
+// ── Delete ────────────────────────────────────────────────
 async function delTaxEnquiry(id) {
-  if (!confirm('Delete this tax enquiry? This cannot be undone.')) return;
+  if (!confirm('Delete this tax enquiry? Cannot be undone.')) return;
   const r = await apiFetch('/admin/tax-enquiries/'+id, 'DELETE');
   if (r.success) { showToast('Deleted.'); loadTaxEnquiries(); }
   else showToast('Delete failed','error');
 }
 
-// ── TAX ENQUIRIES CHART ──────────────────────────────────────────────────────
-// Draws a service breakdown donut chart in the tax panel header
+// ── Dashboard: service breakdown bar chart ────────────────
 async function renderTaxChart() {
   const r = await apiFetch('/admin/stats');
-  if (!r.success || !r.taxByService) return;
+  if (!r.success || !r.taxByService || !r.taxByService.length) return;
 
-  const canvas = document.getElementById('tax-chart-canvas');
-  if (!canvas) return;
+  const wrap = document.getElementById('tax-chart-canvas');
+  if (!wrap) return;
 
-  const data   = r.taxByService.slice(0,7);
-  const total  = data.reduce((s,d) => s + d.count, 0);
-  if (total === 0) return;
+  const data   = r.taxByService.slice(0, 7);
+  const total  = data.reduce((s, d) => s + d.count, 0);
+  if (!total) return;
 
-  const colors = ['#f59e0b','#60a5fa','#34d399','#a78bfa','#fb923c','#f87171','#22d3ee'];
-  const ctx    = canvas.getContext('2d');
-  const cx = canvas.width/2, cy = canvas.height/2, r2 = Math.min(cx,cy)-8;
+  const colors = ['#f59e0b','#3b82f6','#10b981','#8b5cf6','#f97316','#ef4444','#06b6d4'];
 
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  let startAngle = -Math.PI/2;
-  data.forEach((d, i) => {
-    const slice = (d.count / total) * 2 * Math.PI;
-    ctx.beginPath();
-    ctx.moveTo(cx, cy);
-    ctx.arc(cx, cy, r2, startAngle, startAngle + slice);
-    ctx.closePath();
-    ctx.fillStyle = colors[i % colors.length];
-    ctx.fill();
-    startAngle += slice;
-  });
-
-  // Donut hole
-  ctx.beginPath();
-  ctx.arc(cx, cy, r2 * 0.55, 0, 2 * Math.PI);
-  ctx.fillStyle = '#0b1a30';
-  ctx.fill();
-
-  // Center text
-  ctx.fillStyle = '#fff';
-  ctx.font = 'bold 18px DM Sans, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(total, cx, cy - 8);
-  ctx.font = '11px DM Sans, sans-serif';
-  ctx.fillStyle = 'rgba(255,255,255,.45)';
-  ctx.fillText('total', cx, cy + 12);
-
-  // Legend
-  const legend = document.getElementById('tax-chart-legend');
-  if (legend) {
-    legend.innerHTML = data.map((d, i) => `
-      <div style="display:flex;align-items:center;gap:.4rem;margin-bottom:.3rem;">
-        <span style="width:10px;height:10px;border-radius:2px;background:${colors[i%colors.length]};flex-shrink:0;"></span>
-        <span style="font-size:.72rem;color:rgba(255,255,255,.65);flex:1;">${d._id||'Unknown'}</span>
-        <span style="font-size:.72rem;font-weight:700;color:#fff;">${d.count}</span>
-      </div>`).join('');
-  }
+  // Replace canvas with a clean horizontal bar chart (no canvas needed)
+  wrap.outerHTML = `<div id="tax-chart-canvas" style="flex:1;">
+    <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;
+      color:var(--muted);margin-bottom:.9rem;">Enquiries by Service</div>
+    ${data.map((d, i) => {
+      const pct = Math.round((d.count / total) * 100);
+      return `
+      <div style="margin-bottom:.65rem;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.28rem;">
+          <span style="font-size:.78rem;font-weight:600;color:var(--primary);">${d._id||'Unknown'}</span>
+          <span style="font-size:.75rem;font-weight:700;color:${colors[i%colors.length]};">${d.count} <span style="color:var(--muted);font-weight:400;">(${pct}%)</span></span>
+        </div>
+        <div style="height:7px;background:#e5e0d8;border-radius:100px;overflow:hidden;">
+          <div style="height:100%;width:${pct}%;background:${colors[i%colors.length]};border-radius:100px;
+            transition:width .6s cubic-bezier(.16,1,.3,1);"></div>
+        </div>
+      </div>`;
+    }).join('')}
+    <div style="margin-top:.8rem;font-size:.72rem;color:var(--muted);">Total: <strong style="color:var(--primary);">${total}</strong> enquiries</div>
+  </div>`;
 }
 
-
-
+// ── Status counts strip ───────────────────────────────────
 async function renderTaxStats() {
-  const r = await apiFetch('/admin/stats');
-  if (!r.success) return;
-  const s = r.stats;
   const strip = document.getElementById('tax-stats-strip');
   if (!strip) return;
-  const items = [
-    { label:'Total',     val: s.totalTaxEnquiries||0, color:'#60a5fa' },
-    { label:'New',       val: s.newTaxEnquiries||0,    color:'#f59e0b' },
-    { label:'In Progress', val:'—', color:'#34d399' },
-    { label:'Completed', val:'—', color:'#4ade80' },
+
+  strip.innerHTML = `<div style="font-size:.75rem;color:var(--muted);">Loading stats…</div>`;
+
+  // Fetch counts for key statuses in parallel
+  const [rAll, rNew, rProg, rDone] = await Promise.all([
+    apiFetch('/admin/tax-enquiries?limit=1'),
+    apiFetch('/admin/tax-enquiries?limit=1&status=new'),
+    apiFetch('/admin/tax-enquiries?limit=1&status=in-progress'),
+    apiFetch('/admin/tax-enquiries?limit=1&status=completed'),
+  ]);
+
+  const pills = [
+    { label:'Total',       val: rAll?.pagination?.total  ?? '—', color:'#1d4ed8',  bg:'#eff6ff',  border:'#bfdbfe' },
+    { label:'🆕 New',      val: rNew?.pagination?.total  ?? '—', color:'#b45309',  bg:'#fff7e6',  border:'#fbbf24' },
+    { label:'⚙️ In Prog.', val: rProg?.pagination?.total ?? '—', color:'#065f46',  bg:'#ecfdf5',  border:'#6ee7b7' },
+    { label:'🎉 Done',     val: rDone?.pagination?.total ?? '—', color:'#166534',  bg:'#f0fdf4',  border:'#4ade80' },
   ];
-  // Fetch status counts
-  const counts = {};
-  if (r.taxByService) {
-    // get status breakdown separately
-    const r2 = await apiFetch('/admin/tax-enquiries?limit=1&status=in-progress');
-    const r3 = await apiFetch('/admin/tax-enquiries?limit=1&status=completed');
-    if (r2.success) items[2].val = r2.pagination?.total ?? '—';
-    if (r3.success) items[3].val = r3.pagination?.total ?? '—';
-  }
-  strip.innerHTML = items.map(it => `
-    <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
-      border-radius:10px;padding:.6rem 1rem;min-width:90px;text-align:center;">
-      <div style="font-size:1.3rem;font-weight:700;color:${it.color};">${it.val}</div>
-      <div style="font-size:.65rem;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.8px;margin-top:.15rem;">${it.label}</div>
+
+  strip.innerHTML = pills.map(p => `
+    <div style="background:${p.bg};border:1.5px solid ${p.border};border-radius:10px;
+      padding:.55rem 1.1rem;min-width:90px;text-align:center;cursor:pointer;"
+      onclick="document.getElementById('tax-status').value='${p.label.includes('New')?'new':p.label.includes('Prog')?'in-progress':p.label.includes('Done')?'completed':'all'}';loadTaxEnquiries()">
+      <div style="font-size:1.4rem;font-weight:800;color:${p.color};line-height:1;">${p.val}</div>
+      <div style="font-size:.66rem;color:${p.color};text-transform:uppercase;letter-spacing:.7px;margin-top:.15rem;font-weight:600;">${p.label}</div>
     </div>`).join('');
 }
 
-</script>>
+</script>>>
 </body>
 </html>
