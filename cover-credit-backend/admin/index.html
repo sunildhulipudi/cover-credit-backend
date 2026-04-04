@@ -534,6 +534,10 @@
         <span class="nav-icon">📩</span> Contacts
         <span class="nav-badge" id="nav-contact-badge"></span>
       </button>
+      <button class="nav-item" onclick="showPanel('taxenquiries')">
+        <span class="nav-icon">📋</span> Tax Enquiries
+        <span class="nav-badge" id="nav-tax-badge"></span>
+      </button>
 
       <div class="nav-section">Content</div>
       <button class="nav-item" onclick="showPanel('blog')">
@@ -802,6 +806,57 @@
 
       </div>
 
+
+      <!-- ══ TAX ENQUIRIES PANEL ══ -->
+      <div class="panel" id="panel-taxenquiries">
+        <div class="panel-header">
+          <span class="panel-title">Tax Enquiries</span>
+          <div class="controls">
+            <input class="search-input" id="tax-search"
+              placeholder="Search name, phone, city, service…"
+              oninput="debounce(loadTaxEnquiries,400)()"/>
+            <select class="filter-select" id="tax-status" onchange="loadTaxEnquiries()">
+              <option value="all">All Status</option>
+              <option value="new">🆕 New</option>
+              <option value="contacted">📞 Contacted</option>
+              <option value="docs-received">📁 Docs Received</option>
+              <option value="in-progress">⚙️ In Progress</option>
+              <option value="query">❓ Query</option>
+              <option value="quote-sent">💰 Quote Sent</option>
+              <option value="payment-pending">⏳ Payment Pending</option>
+              <option value="payment-done">✅ Payment Done</option>
+              <option value="filed">🏛️ Filed</option>
+              <option value="completed">🎉 Completed</option>
+              <option value="cancelled">❌ Cancelled</option>
+              <option value="no-response">🔇 No Response</option>
+            </select>
+            <select class="filter-select" id="tax-service" onchange="loadTaxEnquiries()" style="min-width:160px;">
+              <option value="all">All Services</option>
+              <option value="ITR">📄 ITR Filing</option>
+              <option value="GST Returns">🧾 GST Returns</option>
+              <option value="GST Registration">✅ GST Registration</option>
+              <option value="Company Registration">🏢 Company Registration</option>
+              <option value="Firm Registration">🤝 Firm Registration</option>
+              <option value="Annual Filings">📅 Annual Filings</option>
+              <option value="Tax Audit">🔍 Tax Audit</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th><th>Phone</th><th>City</th><th>Service</th>
+                <th>Notes</th><th>Status</th><th>Admin Notes</th><th>Date</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="tax-body">
+              <tr><td colspan="9"><div class="loading">Loading…</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination" id="tax-pagination"></div>
+      </div>
     </div><!-- /content -->
   </main>
 </div>
@@ -1171,7 +1226,7 @@ const panelTitles = {
   dashboard:'Dashboard', bookings:'Consultation Bookings',
   contacts:'Contact Submissions', blog:'Blog Posts',
   analytics:'Site Analytics',
-};
+, taxenquiries: 'Tax Enquiries' };
 
 function showPanel(name) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
@@ -1182,10 +1237,11 @@ function showPanel(name) {
     if (n.getAttribute('onclick')?.includes(`'${name}'`)) n.classList.add('active');
   });
   document.getElementById('panel-heading').textContent = panelTitles[name] || name;
-  if (name === 'bookings') loadBookings();
-  if (name === 'contacts') loadContacts();
-  if (name === 'blog')     loadBlog();
-  if (name === 'analytics') loadAnalytics(30);
+  if (name === 'bookings')     loadBookings();
+  if (name === 'contacts')     loadContacts();
+  if (name === 'blog')         loadBlog();
+  if (name === 'analytics')    loadAnalytics(30);
+  if (name === 'taxenquiries') loadTaxEnquiries();
 }
 
 // ── API helper ────────────────────────────────────────────
@@ -1230,6 +1286,7 @@ async function loadDashboard() {
     </div>`;
 
   document.getElementById('nav-booking-badge').textContent = s.newBookings > 0 ? s.newBookings : '';
+    if (document.getElementById('nav-tax-badge')) document.getElementById('nav-tax-badge').textContent = s.newTaxEnquiries > 0 ? s.newTaxEnquiries : '';
   document.getElementById('nav-contact-badge').textContent = s.newContacts > 0 ? s.newContacts : '';
 
   const deptData = {};
@@ -2405,6 +2462,142 @@ function closePreview(e) {
     document.getElementById('preview-overlay').classList.remove('show');
     document.body.style.overflow = '';
   }
+}
+
+
+// ══════════════════════════════════════════════════════════
+// TAX ENQUIRIES JS
+// ══════════════════════════════════════════════════════════
+const TAX_STATUS_LABELS = {
+  'new':'🆕 New','contacted':'📞 Contacted','docs-received':'📁 Docs Received',
+  'in-progress':'⚙️ In Progress','query':'❓ Query','quote-sent':'💰 Quote Sent',
+  'payment-pending':'⏳ Payment Pending','payment-done':'✅ Payment Done',
+  'filed':'🏛️ Filed','completed':'🎉 Completed',
+  'cancelled':'❌ Cancelled','no-response':'🔇 No Response',
+};
+const TAX_STATUS_COLORS = {
+  'new':'#f59e0b','contacted':'#60a5fa','docs-received':'#818cf8',
+  'in-progress':'#34d399','query':'#fb923c','quote-sent':'#a78bfa',
+  'payment-pending':'#fbbf24','payment-done':'#4ade80',
+  'filed':'#22d3ee','completed':'#4ade80',
+  'cancelled':'#f87171','no-response':'#6b7280',
+};
+
+async function loadTaxEnquiries(page = currentPage.taxenquiries || 1) {
+  currentPage.taxenquiries = page;
+  const search  = document.getElementById('tax-search')?.value  || '';
+  const status  = document.getElementById('tax-status')?.value  || 'all';
+  const service = document.getElementById('tax-service')?.value || 'all';
+  const params  = new URLSearchParams({ page, limit: 20, status, search });
+  if (service !== 'all') params.set('service', service);
+  const r = await apiFetch('/admin/tax-enquiries?' + params);
+  if (!r.success) return;
+
+  const tbody = document.getElementById('tax-body');
+  if (!r.data.length) {
+    tbody.innerHTML = `<tr><td colspan="9"><div class="empty"><div class="empty-icon">📭</div><p>No tax enquiries found</p></div></td></tr>`;
+    document.getElementById('tax-pagination').innerHTML = '';
+    return;
+  }
+
+  window._taxMap = {};
+  r.data.forEach(t => { window._taxMap[t._id] = t; });
+
+  tbody.innerHTML = r.data.map(t => {
+    const statusLabel = TAX_STATUS_LABELS[t.status] || t.status;
+    const statusColor = TAX_STATUS_COLORS[t.status] || '#aaa';
+    const waNum = t.phone.replace(/\D/g, '');
+    const opts  = Object.entries(TAX_STATUS_LABELS).map(([v,l]) =>
+      `<option value="${v}" ${t.status===v?'selected':''}>${l}</option>`).join('');
+    return `
+    <tr>
+      <td class="td-name">${esc(t.name)}</td>
+      <td class="td-phone"><a href="tel:${t.phone}">${t.phone}</a></td>
+      <td style="font-size:.82rem;color:#93c5fd;">${esc(t.city||'—')}</td>
+      <td style="font-size:.82rem;font-weight:600;color:#fcd34d;">${esc(t.service)}</td>
+      <td style="max-width:150px;font-size:.78rem;color:rgba(255,255,255,.45);">
+        ${t.notes ? esc(t.notes.substring(0,60))+(t.notes.length>60?'…':'') : '—'}</td>
+      <td>
+        <select style="background:rgba(0,0,0,.3);color:${statusColor};border:1px solid ${statusColor}44;
+          border-radius:6px;padding:.2rem .4rem;font-size:.72rem;font-weight:600;cursor:pointer;"
+          onchange="updateTaxStatus('${t._id}',this.value)">${opts}</select>
+      </td>
+      <td style="max-width:140px;font-size:.78rem;color:rgba(255,255,255,.4);">
+        ${t.adminNotes ? esc(t.adminNotes.substring(0,50))+(t.adminNotes.length>50?'…':'') : '—'}</td>
+      <td class="td-date">${fmtDate(t.createdAt)}</td>
+      <td>
+        <div class="actions">
+          <a href="tel:${t.phone}" class="act-btn act-call" title="Call">📞</a>
+          <a href="https://wa.me/${waNum}" target="_blank" class="act-btn"
+            style="background:rgba(37,211,102,.15);color:#4ade80;" title="WhatsApp">💬</a>
+          <button class="act-btn act-edit" onclick="openTaxEdit('${t._id}')">Edit</button>
+          <button class="act-btn act-delete" onclick="delTaxEnquiry('${t._id}')">Delete</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+
+  renderPagination('tax-pagination', r.pagination, loadTaxEnquiries);
+}
+
+async function updateTaxStatus(id, newStatus) {
+  const r = await apiFetch('/admin/tax-enquiries/' + id, 'PATCH', { status: newStatus });
+  if (r.success) showToast('Status updated: ' + (TAX_STATUS_LABELS[newStatus]||newStatus));
+  else showToast('Update failed', 'error');
+}
+
+function openTaxEdit(id) {
+  const t = (window._taxMap||{})[id];
+  if (!t) { showToast('Reload the page and try again', 'error'); return; }
+  const opts = Object.entries(TAX_STATUS_LABELS).map(([v,l]) =>
+    `<option value="${v}" ${t.status===v?'selected':''}>${l}</option>`).join('');
+  const overlay = document.getElementById('modal-overlay');
+  const body    = document.getElementById('modal-body');
+  if (!overlay||!body) { showToast('Modal not available','error'); return; }
+  body.innerHTML = `
+    <h2 style="font-family:'Playfair Display',serif;font-size:1.2rem;margin-bottom:1.1rem;color:var(--primary);">Edit Tax Enquiry</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.7rem;margin-bottom:.9rem;">
+      <div><div class="fl">Name</div><input class="fi" value="${esc(t.name)}" disabled/></div>
+      <div><div class="fl">Phone</div><input class="fi" value="${esc(t.phone)}" disabled/></div>
+      <div><div class="fl">City</div><input class="fi" value="${esc(t.city||'')}" disabled/></div>
+      <div><div class="fl">Service</div><input class="fi" value="${esc(t.service)}" disabled/></div>
+    </div>
+    <div style="margin-bottom:.8rem;">
+      <div class="fl">Client Notes</div>
+      <textarea class="fi" rows="2" disabled style="resize:none;">${esc(t.notes||'—')}</textarea>
+    </div>
+    <div style="margin-bottom:.8rem;">
+      <div class="fl">Status</div>
+      <select class="fi" id="te-status">${opts}</select>
+    </div>
+    <div style="margin-bottom:1.1rem;">
+      <div class="fl">Admin Notes</div>
+      <textarea class="fi" id="te-admin-notes" rows="3" style="resize:vertical;"
+        placeholder="Follow-up notes, documents received…">${esc(t.adminNotes||'')}</textarea>
+    </div>
+    <div style="display:flex;gap:.6rem;justify-content:flex-end;">
+      <button class="btn-secondary" onclick="document.getElementById('modal-overlay').classList.remove('show')">Cancel</button>
+      <button class="btn-primary" onclick="saveTaxEdit('${t._id}')">Save Changes</button>
+    </div>`;
+  overlay.classList.add('show');
+}
+
+async function saveTaxEdit(id) {
+  const status     = document.getElementById('te-status')?.value;
+  const adminNotes = (document.getElementById('te-admin-notes')?.value||'').trim();
+  const r = await apiFetch('/admin/tax-enquiries/'+id, 'PATCH', { status, adminNotes });
+  if (r.success) {
+    showToast('Saved ✓');
+    document.getElementById('modal-overlay').classList.remove('show');
+    loadTaxEnquiries();
+  } else showToast('Save failed','error');
+}
+
+async function delTaxEnquiry(id) {
+  if (!confirm('Delete this tax enquiry? Cannot be undone.')) return;
+  const r = await apiFetch('/admin/tax-enquiries/'+id, 'DELETE');
+  if (r.success) { showToast('Deleted.'); loadTaxEnquiries(); }
+  else showToast('Delete failed','error');
 }
 
 </script>
