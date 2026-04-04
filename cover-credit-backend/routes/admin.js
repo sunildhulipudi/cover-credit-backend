@@ -7,8 +7,9 @@
 const express  = require('express');
 const router   = express.Router();
 const auth     = require('../middleware/auth');
-const Contact  = require('../models/Contact');
-const Booking  = require('../models/Booking');
+const Contact     = require('../models/Contact');
+const Booking     = require('../models/Booking');
+const TaxEnquiry  = require('../models/TaxEnquiry');
 const { sendReminderEmail } = require('../utils/email');
 
 // Apply auth to ALL admin routes
@@ -23,16 +24,21 @@ router.get('/stats', async (req, res) => {
     const [
       totalContacts,
       totalBookings,
+      totalTaxEnquiries,
       newContacts,
       newBookings,
+      newTaxEnquiries,
       contactsByInterest,
       bookingsByDepartment,
+      taxByService,
       recentActivity,
     ] = await Promise.all([
       Contact.countDocuments(),
       Booking.countDocuments(),
+      TaxEnquiry.countDocuments(),
       Contact.countDocuments({ status: 'new' }),
       Booking.countDocuments({ status: 'new' }),
+      TaxEnquiry.countDocuments({ status: 'new' }),
 
       Contact.aggregate([
         { $group: { _id: '$interest', count: { $sum: 1 } } },
@@ -44,9 +50,15 @@ router.get('/stats', async (req, res) => {
         { $sort:  { count: -1 } },
       ]),
 
+      TaxEnquiry.aggregate([
+        { $group: { _id: '$service', count: { $sum: 1 } } },
+        { $sort:  { count: -1 } },
+      ]),
+
       Promise.all([
         Contact.find().sort({ createdAt: -1 }).limit(5).lean(),
         Booking.find().sort({ createdAt: -1 }).limit(5).lean(),
+        TaxEnquiry.find().sort({ createdAt: -1 }).limit(5).lean(),
       ]),
     ]);
 
@@ -55,15 +67,19 @@ router.get('/stats', async (req, res) => {
       stats: {
         totalContacts,
         totalBookings,
-        totalLeads:  totalContacts + totalBookings,
+        totalTaxEnquiries,
+        totalLeads:       totalContacts + totalBookings + totalTaxEnquiries,
         newContacts,
         newBookings,
-        newLeads:    newContacts + newBookings,
+        newTaxEnquiries,
+        newLeads:         newContacts + newBookings + newTaxEnquiries,
       },
       contactsByInterest,
       bookingsByDepartment,
-      recentContacts: recentActivity[0],
-      recentBookings: recentActivity[1],
+      taxByService,
+      recentContacts:     recentActivity[0],
+      recentBookings:     recentActivity[1],
+      recentTaxEnquiries: recentActivity[2],
     });
   } catch (err) {
     console.error('Stats error:', err);
@@ -279,6 +295,80 @@ router.post('/bookings/:id/reminder', async (req, res) => {
   } catch (err) {
     console.error('Set reminder error:', err);
     res.status(500).json({ success: false, message: 'Failed to set reminder.' });
+  }
+});
+
+
+
+// ══════════════════════════════════════════════════════════
+// TAX ENQUIRIES  — submissions from tax-services.html popup
+// Completely separate from Bookings (book.html form)
+// ══════════════════════════════════════════════════════════
+
+// GET /api/admin/tax-enquiries
+router.get('/tax-enquiries', async (req, res) => {
+  try {
+    const page  = Math.max(1, parseInt(req.query.page)  || 1);
+    const limit = Math.min(100, parseInt(req.query.limit) || 20);
+    const skip  = (page - 1) * limit;
+
+    const filter = {};
+    if (req.query.status  && req.query.status  !== 'all') filter.status  = req.query.status;
+    if (req.query.service && req.query.service !== 'all') {
+      filter.service = { $regex: req.query.service, $options: 'i' };
+    }
+    if (req.query.search) {
+      const s = req.query.search.trim();
+      filter.$or = [
+        { name:    { $regex: s, $options: 'i' } },
+        { phone:   { $regex: s, $options: 'i' } },
+        { city:    { $regex: s, $options: 'i' } },
+        { service: { $regex: s, $options: 'i' } },
+        { notes:   { $regex: s, $options: 'i' } },
+      ];
+    }
+
+    const [enquiries, total] = await Promise.all([
+      TaxEnquiry.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+      TaxEnquiry.countDocuments(filter),
+    ]);
+
+    res.json({
+      success: true,
+      data: enquiries,
+      pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+    });
+  } catch (err) {
+    console.error('Tax enquiries fetch error:', err);
+    res.status(500).json({ success: false, message: 'Failed to load tax enquiries.' });
+  }
+});
+
+// PATCH /api/admin/tax-enquiries/:id — update status, adminNotes, assignedTo
+router.patch('/tax-enquiries/:id', async (req, res) => {
+  try {
+    const allowed = ['status', 'adminNotes', 'assignedTo'];
+    const update  = {};
+    allowed.forEach(f => { if (req.body[f] !== undefined) update[f] = req.body[f]; });
+
+    const enquiry = await TaxEnquiry.findByIdAndUpdate(
+      req.params.id, update, { new: true, runValidators: true }
+    );
+    if (!enquiry) return res.status(404).json({ success: false, message: 'Not found.' });
+
+    res.json({ success: true, data: enquiry });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Update failed.' });
+  }
+});
+
+// DELETE /api/admin/tax-enquiries/:id
+router.delete('/tax-enquiries/:id', async (req, res) => {
+  try {
+    await TaxEnquiry.findByIdAndDelete(req.params.id);
+    res.json({ success: true, message: 'Deleted.' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Delete failed.' });
   }
 });
 
