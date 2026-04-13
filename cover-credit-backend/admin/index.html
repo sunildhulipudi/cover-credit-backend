@@ -1362,6 +1362,18 @@ let currentPage={bookings:1,contacts:1,blog:1,taxenquiries:1};
 let currentAnalyticsDays=30;
 let charts={};
 
+// Global record caches — populated from ANY source (dashboard, panel loads, etc.)
+window._bookingMap  = window._bookingMap  || {};
+window._contactMap  = window._contactMap  || {};
+window._taxMap      = window._taxMap      || {};
+window._blogMap     = window._blogMap     || {};
+
+// Merge helpers — always keep the freshest copy
+function cacheBookings(arr){(arr||[]).forEach(b=>{window._bookingMap[b._id]=b;});}
+function cacheContacts(arr){(arr||[]).forEach(c=>{window._contactMap[c._id]=c;});}
+function cacheTax(arr){(arr||[]).forEach(t=>{window._taxMap[t._id]=t;});}
+function cacheBlogs(arr){(arr||[]).forEach(p=>{window._blogMap[p._id]=p;});}
+
 // Chart.js global defaults
 Chart.defaults.color='#4d5a7a';
 Chart.defaults.borderColor='rgba(255,255,255,.04)';
@@ -1523,6 +1535,9 @@ async function loadDashboard(){
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#4d5a7a',maxTicksLimit:4}},x:{grid:{display:false},ticks:{color:'#4d5a7a'}}}}
   });
 
+  // Cache records from dashboard so clicks work without re-fetching
+  cacheBookings(r.recentBookings);
+  cacheContacts(r.recentContacts);
   // Activity feed
   buildActivityFeed(r.recentBookings,r.recentContacts);
   // Recent tables
@@ -1536,17 +1551,17 @@ function buildActivityFeed(bookings,contacts){
   const items=[];
   (bookings||[]).slice(0,4).forEach(b=>{
     const dept=DEPT[b.department]||{icon:'📋',label:b.department};
-    items.push({icon:dept.icon,bg:'rgba(79,142,247,.12)',title:`<strong>${esc(b.name)}</strong> booked a consultation — ${dept.label}`,time:b.createdAt,action:()=>{openEditById('booking',b._id);}});
+    items.push({icon:dept.icon,bg:'rgba(79,142,247,.12)',title:`<strong>${esc(b.name)}</strong> booked a consultation — ${dept.label}`,time:b.createdAt,rtype:'booking',rid:b._id});
   });
   (contacts||[]).slice(0,3).forEach(c=>{
-    items.push({icon:'💬',bg:'rgba(34,214,138,.1)',title:`<strong>${esc(c.firstName)} ${esc(c.lastName)}</strong> submitted a contact form`,time:c.createdAt,action:()=>{openEditById('contact',c._id);}});
+    items.push({icon:'💬',bg:'rgba(34,214,138,.1)',title:`<strong>${esc(c.firstName)} ${esc(c.lastName)}</strong> submitted a contact form`,time:c.createdAt,rtype:'contact',rid:c._id});
   });
   items.sort((a,b)=>new Date(b.time)-new Date(a.time));
   const feed=document.getElementById('activity-feed');
   if(!feed)return;
   if(!items.length){feed.innerHTML='<div class="empty" style="padding:1.5rem 0;"><div class="empty-icon">⚡</div><p>No recent activity</p></div>';return;}
-  feed.innerHTML=items.slice(0,6).map(item=>`
-    <div class="activity-item" onclick="${item.action.toString().includes('openEdit')?`openEditById('booking','')`:''}" style="cursor:pointer;">
+  feed.innerHTML=items.slice(0,6).map(item=>
+    `<div class="activity-item" onclick="openEditById('${item.rtype}','${item.rid}')" style="cursor:pointer;">
       <div class="activity-dot" style="background:${item.bg};">${item.icon}</div>
       <div class="activity-content">
         <div class="activity-title">${item.title}</div>
@@ -1576,7 +1591,7 @@ async function loadBookings(page=currentPage.bookings){
   if(!r.success)return;
   const tbody=document.getElementById('bookings-body');
   if(!r.data.length){tbody.innerHTML=`<tr><td colspan="9"><div class="empty"><div class="empty-icon">📭</div><p>No bookings found</p></div></td></tr>`;document.getElementById('bookings-pagination').innerHTML='';return;}
-  window._bookingMap={};r.data.forEach(b=>{window._bookingMap[b._id]=b;});
+  cacheBookings(r.data);
   tbody.innerHTML=r.data.map(b=>{
     const d=DEPT[b.department]||{icon:'📋',label:b.department};
     const cm={'Phone Call':'📞','WhatsApp':'💬','Email':'📧'}[b.contactMethod]||'📞';
@@ -1614,7 +1629,7 @@ async function loadContacts(page=currentPage.contacts){
   if(!r.success)return;
   const tbody=document.getElementById('contacts-body');
   if(!r.data.length){tbody.innerHTML=`<tr><td colspan="7"><div class="empty"><div class="empty-icon">📭</div><p>No contacts found</p></div></td></tr>`;document.getElementById('contacts-pagination').innerHTML='';return;}
-  window._contactMap={};r.data.forEach(c=>{window._contactMap[c._id]=c;});
+  cacheContacts(r.data);
   tbody.innerHTML=r.data.map(c=>`
     <tr>
       <td class="td-name" style="cursor:pointer;" onclick="openEditById('contact','${c._id}')">${esc(c.firstName)} ${esc(c.lastName)}</td>
@@ -1653,7 +1668,7 @@ async function loadBlog(page=currentPage.blog){
   }
   const tbody=document.getElementById('blog-body');
   if(!r.data.length){tbody.innerHTML=`<tr><td colspan="8"><div class="empty"><div class="empty-icon">✍️</div><p>No posts yet. Create your first!</p></div></td></tr>`;document.getElementById('blog-pagination').innerHTML='';return;}
-  window._blogMap={};r.data.forEach(p=>{window._blogMap[p._id]=p;});
+  cacheBlogs(r.data);
   const now=new Date();
   tbody.innerHTML=r.data.map(p=>{
     const cat=BLOG_CAT[p.category]||{icon:'📄',label:p.category};
@@ -1831,10 +1846,51 @@ function closePreview(e){if(!e||e.target===document.getElementById('preview-over
 const bookingStatuses=['new','confirmed','completed','cancelled','no-show'];
 const contactStatuses=['new','contacted','converted','closed'];
 async function openEditById(type,id){
+  if(!id){showToast('Invalid record ID.','error');return;}
+  // Tax goes directly to openTaxEdit
+  if(type==='taxenquiry'||type==='tax'){
+    let t=window._taxMap[id];
+    if(!t){
+      showToast('Loading…');
+      try{const r=await apiFetch(`/admin/tax-enquiries/${id}`);if(r.success&&r.data){t=r.data;window._taxMap[id]=t;}}catch{}
+    }
+    if(t){openTaxEdit_fromCache(t);return;}
+    showToast('Record not found.','error');return;
+  }
+  // 1. Check in-memory cache first (instant)
+  const cached = type==='booking'? window._bookingMap[id] : window._contactMap[id];
+  if(cached){openEdit(type,cached);return;}
+  // 2. Fetch directly by ID from server
   showToast('Loading…');
-  try{const path=type==='booking'?`/admin/bookings?page=1&limit=200&status=all`:`/admin/contacts?page=1&limit=200&status=all`;const r=await apiFetch(path);if(r.success){const rec=r.data.find(x=>x._id===id);if(rec){openEdit(type,rec);return;}}}catch{}
-  const cached=type==='booking'?(window._bookingMap||{})[id]:(window._contactMap||{})[id];
-  if(!cached){showToast('Refresh and try again.','error');return;}openEdit(type,cached);
+  try{
+    const singlePath = type==='booking' ? `/admin/bookings/${id}`
+                     : type==='contact' ? `/admin/contacts/${id}`
+                     : `/admin/tax-enquiries/${id}`;
+    const r = await apiFetch(singlePath);
+    if(r.success && r.data){
+      if(type==='booking')  window._bookingMap[id]=r.data;
+      else if(type==='contact') window._contactMap[id]=r.data;
+      else window._taxMap[id]=r.data;
+      openEdit(type,r.data);return;
+    }
+  }catch{}
+  // 3. Fallback: search in paginated list
+  try{
+    const listPath = type==='booking' ? `/admin/bookings?page=1&limit=200&status=all`
+                   : type==='contact' ? `/admin/contacts?page=1&limit=200&status=all`
+                   : `/admin/tax-enquiries?page=1&limit=200`;
+    const r2=await apiFetch(listPath);
+    if(r2.success){
+      const rec=r2.data.find(x=>x._id===id);
+      if(rec){
+        if(type==='booking') cacheBookings(r2.data);
+        else if(type==='contact') cacheContacts(r2.data);
+        else cacheTax(r2.data);
+        openEdit(type,rec);return;
+      }
+    }
+  }catch{}
+  showToast('Record not found. Try refreshing.','error');
 }
 function openEdit(type,data){
   editType=type;editId=data._id;
@@ -1878,8 +1934,17 @@ async function saveNote(){
 // ════════════════════════════════════════
 // REMINDER
 // ════════════════════════════════════════
-function openReminderModal(bookingId){
-  reminderId=bookingId;const b=(window._bookingMap||{})[bookingId];if(!b){showToast('Refresh and try again.','error');return;}
+async function openReminderModal(bookingId){
+  reminderId=bookingId;
+  let b=window._bookingMap[bookingId];
+  if(!b){
+    showToast('Loading…');
+    try{
+      const r=await apiFetch(`/admin/bookings/${bookingId}`);
+      if(r.success&&r.data){b=r.data;window._bookingMap[bookingId]=b;}
+    }catch{}
+  }
+  if(!b){showToast('Could not load booking. Try refreshing.','error');return;}
   const dept=DEPT[b.department]||{icon:'📋',label:b.department};const hasActive=b.reminder&&b.reminder.scheduledAt&&!b.reminder.sent;
   document.getElementById('reminder-customer-info').innerHTML=`<p><strong>${esc(b.name)}</strong> · <a href="tel:${b.phone}" style="color:var(--cyan);">${b.phone}</a></p><p>${dept.icon} ${dept.label} · ${esc(b.city||'—')}</p>${hasActive?`<p style="font-size:11px;color:var(--violet);margin-top:4px;">⏰ Current: ${fmtDate(b.reminder.scheduledAt)} — will be replaced.</p>`:''}`;
   document.getElementById('reminder-note').value=(b.reminder&&b.reminder.note)?b.reminder.note:'';
@@ -1911,7 +1976,7 @@ async function loadTaxEnquiries(page){
   const r=await apiFetch('/admin/tax-enquiries?'+params);if(!r.success)return;
   const tbody=document.getElementById('tax-body');
   if(!r.data.length){tbody.innerHTML='<tr><td colspan="9"><div class="empty"><div class="empty-icon">📭</div><p>No tax enquiries found</p></div></td></tr>';document.getElementById('tax-pagination').innerHTML='';return;}
-  window._taxMap={};r.data.forEach(t=>{window._taxMap[t._id]=t;});
+  cacheTax(r.data);
   tbody.innerHTML=r.data.map(t=>{
     const col=TAX_SCOLORS[t.status]||'#4d5a7a',lbl=TAX_STATUS_LABELS[t.status]||t.status,waNum=t.phone.replace(/\D/g,'');
     const statusHtml=`<span onclick="openTaxEdit('${t._id}')" class="tsx-badge" style="background:${col}18;color:${col};border:1px solid ${col}30;">${lbl}</span>`;
@@ -1938,7 +2003,22 @@ async function loadTaxEnquiries(page){
   renderPagination('tax-pagination',r.pagination,loadTaxEnquiries);
 }
 function openTaxEdit(id){
-  const t=window._taxMap&&window._taxMap[id];if(!t){showToast('Refresh and try again.','error');return;}
+  const t=window._taxMap&&window._taxMap[id];
+  if(!t){
+    // Try fetching directly
+    (async()=>{
+      showToast('Loading…');
+      try{
+        const r=await apiFetch(`/admin/tax-enquiries/${id}`);
+        if(r.success&&r.data){window._taxMap[id]=r.data;openTaxEdit_fromCache(r.data);}
+        else showToast('Record not found.','error');
+      }catch{showToast('Failed to load.','error');}
+    })();
+    return;
+  }
+  openTaxEdit_fromCache(t);
+}
+function openTaxEdit_fromCache(t){
   document.getElementById('modal-title').textContent='🧾 Edit Tax Enquiry';
   document.getElementById('modal-contact-info').innerHTML=`<p><strong>Name:</strong> ${esc(t.name)}</p><p><strong>Phone:</strong> <a href="tel:${t.phone}" style="color:var(--cyan);">${t.phone}</a></p><p><strong>City:</strong> ${esc(t.city||'—')}</p>${t.email?`<p><strong>Email:</strong> <a href="mailto:${t.email}" style="color:var(--cyan);">${esc(t.email)}</a></p>`:''}<p><strong>Submitted:</strong> ${fmtDate(t.createdAt)}</p>`;
   document.getElementById('modal-details-section').style.display='block';document.getElementById('modal-details-title').textContent='Client Notes (from form)';
