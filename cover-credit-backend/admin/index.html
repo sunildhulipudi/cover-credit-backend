@@ -810,10 +810,9 @@
       <!-- ══ TAX ENQUIRIES PANEL ══ -->
       <div class="panel" id="panel-taxenquiries">
         <!-- Chart strip above table -->
-        <div style="display:grid;grid-template-columns:auto 1fr;gap:1.2rem;align-items:start;
-          background:var(--white);border:1.5px solid var(--border);
+        <div style="background:var(--white);border:1.5px solid var(--border);
           border-radius:14px;padding:1.2rem 1.6rem;margin-bottom:1rem;box-shadow:0 1px 4px rgba(0,0,0,.04);">
-          <div id="tax-chart-canvas" style="flex:1;">
+          <div id="tax-chart-canvas">
             <div style="font-size:.68rem;color:var(--muted);font-style:italic;">Loading chart…</div>
           </div>
         </div>
@@ -887,10 +886,14 @@
       <div class="modal-section-title">Contact Preference</div>
       <div class="modal-info" id="modal-schedule-info"></div>
     </div>
-    <label>Status</label>
-    <select id="modal-status"></select>
-    <label>Scheduled At (optional)</label>
-    <input type="datetime-local" id="modal-scheduled"/>
+    <div id="modal-status-row">
+      <label>Status</label>
+      <select id="modal-status"></select>
+    </div>
+    <div id="modal-schedule-row">
+      <label>Scheduled At (optional)</label>
+      <input type="datetime-local" id="modal-scheduled"/>
+    </div>
     <div id="modal-callnotes-section" style="display:none;">
       <label style="margin-top:1.1rem;">Call Notes Log</label>
       <div id="modal-call-log" class="call-log"></div>
@@ -1818,6 +1821,11 @@ async function openEditById(type, id) {
 
 function openEdit(type, data) {
   editType = type; editId = data._id;
+  // Restore rows hidden by tax edit modal
+  var statusRow   = document.getElementById('modal-status-row');
+  var scheduleRow = document.getElementById('modal-schedule-row');
+  if (statusRow)   statusRow.style.display   = '';
+  if (scheduleRow) scheduleRow.style.display = '';
   const isBooking = type==='booking';
   document.getElementById('modal-title').textContent = isBooking ? '📅 Edit Booking' : '📩 Edit Contact';
   const name = isBooking ? data.name : `${data.firstName} ${data.lastName}`;
@@ -2686,7 +2694,9 @@ function openTaxEdit(id) {
       '</div>' +
     '</div>';
 
-  // Clear unused modal-status (keep it hidden)
+  // Hide the generic modal-status row and schedule row (not used for tax)
+  document.getElementById('modal-status-row').style.display = 'none';
+  document.getElementById('modal-schedule-row').style.display = 'none';
   document.getElementById('modal-status').innerHTML = '';
 
   editType = 'taxenquiry';
