@@ -7,7 +7,7 @@
 const express     = require('express');
 const router      = express.Router();
 const TaxEnquiry  = require('../models/TaxEnquiry');
-const { sendBookingAlert }  = require('../utils/email');
+const { sendTaxEnquiryAlert } = require('../utils/email');
 const { notifyNewBooking }  = require('../utils/whatsapp');
 
 // ── POST /api/tax-enquiry ─────────────────────────────────
@@ -17,6 +17,7 @@ router.post('/', async (req, res) => {
       name, phone, email,
       city,
       department, service, topic,   // accept all three field names
+      message,                          // fallback for notes
       notes,
       page, source,
     } = req.body;
@@ -44,7 +45,7 @@ router.post('/', async (req, res) => {
       email:      (email || '').trim().toLowerCase(),
       city:       city.trim(),
       service:    finalService,
-      notes:      (notes || '').trim(),
+      notes:      (notes || message || '').trim(),  // accept 'notes' or 'message'
       page:       page || '/tax-services',
       source:     source || 'tax-services-popup',
       ipAddress:  req.ip || '',
@@ -55,7 +56,7 @@ router.post('/', async (req, res) => {
       ...enquiry.toObject(),
       topic: finalService,   // email/WA util uses 'topic'
     };
-    sendBookingAlert(notifyData).catch(err => console.error('Tax enquiry email error:', err));
+    sendTaxEnquiryAlert(notifyData).catch(err => console.error('Tax enquiry email error:', err));
     notifyNewBooking(notifyData).catch(err => console.error('Tax enquiry WA error:', err));
 
     return res.status(201).json({
