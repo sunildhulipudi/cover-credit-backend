@@ -307,13 +307,46 @@ async function sendBookingAlert(data) {
 async function sendUserConfirmation(toEmail, name, type, department) {
   if (!process.env.BREVO_API_KEY || !toEmail) return;
 
-  const subject = type === 'booking'
-    ? `Your consultation is booked — Cover Credit`
-    : `We received your message — Cover Credit`;
+  let subject, htmlContent;
 
-  const htmlContent = type === 'booking'
-    ? buildUserConfirmationHTML(name, department)
-    : `<div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;">
+  if (type === 'booking') {
+    subject = `Your consultation is booked — Cover Credit`;
+    htmlContent = buildUserConfirmationHTML(name, department);
+
+  } else if (type === 'tax') {
+    subject = `We received your Tax Enquiry — Cover Credit`;
+    htmlContent = `
+    <div style="font-family:Arial,sans-serif;max-width:540px;margin:0 auto;">
+      <div style="background:linear-gradient(135deg,#1a3c5e,#0f2440);padding:24px 28px;border-radius:12px 12px 0 0;">
+        <p style="margin:0;font-size:20px;font-weight:700;color:#fff;">Cover<span style="color:#f5a623;">Credit</span></p>
+        <p style="margin:4px 0 0;font-size:12px;color:rgba(255,255,255,0.5);">Tax & Compliance Services — AP & Telangana</p>
+      </div>
+      <div style="background:#fff;padding:28px 28px 24px;border-radius:0 0 12px 12px;border:1px solid #e5e0d8;border-top:3px solid #2e7d32;">
+        <p style="font-size:17px;color:#1a3c5e;margin:0 0 8px;">Hi ${name}, we've got your enquiry! ✅</p>
+        <p style="color:#555;line-height:1.7;margin:0 0 16px;">
+          Thank you for reaching out about <strong>${department || 'Tax & Compliance'}</strong>.
+          Our tax advisor will contact you within <strong>24 hours</strong> to discuss your requirements.
+        </p>
+        <div style="background:#f0fdf4;border-left:3px solid #2e7d32;border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:20px;">
+          <p style="margin:0;font-size:13px;color:#166534;font-weight:700;">Please keep these handy:</p>
+          <ul style="margin:6px 0 0;padding-left:18px;font-size:13px;color:#555;line-height:1.8;">
+            <li>PAN Card</li>
+            <li>Form 16 (if salaried) or income details</li>
+            <li>Previous year returns (if any)</li>
+            <li>Bank statements (if required)</li>
+          </ul>
+        </div>
+        <p style="color:#555;font-size:13px;margin:0 0 4px;">
+          Need faster help? Call or WhatsApp:
+          <a href="tel:+917842854466" style="color:#e8622a;font-weight:700;text-decoration:none;">+91 78428 54466</a>
+        </p>
+        <p style="color:#999;font-size:12px;margin:20px 0 0;">— The Cover Credit Team</p>
+      </div>
+    </div>`;
+
+  } else {
+    subject = `We received your message — Cover Credit`;
+    htmlContent = `<div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;">
         <div style="background:linear-gradient(135deg,#1a3c5e,#0f2440);padding:24px 28px;border-radius:12px 12px 0 0;">
           <p style="margin:0;font-size:20px;font-weight:700;color:#fff;">Cover<span style="color:#f5a623;">Credit</span></p>
         </div>
@@ -324,6 +357,7 @@ async function sendUserConfirmation(toEmail, name, type, department) {
           <p style="color:#555;">— The Cover Credit Team</p>
         </div>
       </div>`;
+  }
 
   try {
     await brevoRequest({
