@@ -7,8 +7,8 @@
 const express     = require('express');
 const router      = express.Router();
 const TaxEnquiry  = require('../models/TaxEnquiry');
-const { sendTaxEnquiryAlert } = require('../utils/email');
-const { notifyNewBooking }  = require('../utils/whatsapp');
+const { sendTaxEnquiryAlert, sendUserConfirmation } = require('../utils/email');
+const { notifyNewTaxEnquiry, sendUserTaxConfirmation } = require('../utils/whatsapp');
 
 // ── POST /api/tax-enquiry ─────────────────────────────────
 router.post('/', async (req, res) => {
@@ -57,7 +57,26 @@ router.post('/', async (req, res) => {
       topic: finalService,   // email/WA util uses 'topic'
     };
     sendTaxEnquiryAlert(notifyData).catch(err => console.error('Tax enquiry email error:', err));
-    notifyNewBooking(notifyData).catch(err => console.error('Tax enquiry WA error:', err));
+    notifyNewTaxEnquiry(notifyData).catch(err => console.error('Tax enquiry admin WA error:', err));
+
+    // WhatsApp confirmation to user
+    if (enquiry.phone) {
+      sendUserTaxConfirmation(
+        enquiry.phone,
+        enquiry.name,
+        enquiry.service
+      ).catch(err => console.error('User tax WA confirmation error:', err));
+    }
+
+    // Email confirmation to user
+    if (enquiry.email && enquiry.email.includes('@')) {
+      sendUserConfirmation(
+        enquiry.email,
+        enquiry.name,
+        'tax',
+        enquiry.service
+      ).catch(err => console.error('User tax email confirmation error:', err));
+    }
 
     return res.status(201).json({
       success: true,
