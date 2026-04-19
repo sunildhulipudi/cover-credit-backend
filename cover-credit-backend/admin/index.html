@@ -782,6 +782,77 @@ tbody tr:last-child td{border-bottom:none;}
   .quick-actions{grid-template-columns:repeat(2,1fr);}
   .blog-modal{max-width:100%;border-radius:0;max-height:100vh;}
 }
+
+/* ══════════════════════════════════════
+   MOBILE HAMBURGER & OVERLAY
+══════════════════════════════════════ */
+.mob-hamburger{
+  display:none;align-items:center;justify-content:center;
+  width:32px;height:32px;border-radius:var(--radius);
+  background:var(--bg3);border:1px solid var(--border2);
+  color:var(--text2);font-size:17px;cursor:pointer;flex-shrink:0;
+  transition:.15s;
+}
+.mob-hamburger:hover{border-color:var(--border3);color:var(--text);}
+
+.mob-sidebar-overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,.55);backdrop-filter:blur(3px);
+  z-index:199;
+}
+.mob-sidebar-overlay.show{display:block;}
+
+/* ══════════════════════════════════════
+   MOBILE RESPONSIVE ADDITIONS
+══════════════════════════════════════ */
+@media(max-width:768px){
+  /* Hamburger visible */
+  .mob-hamburger{display:flex;}
+
+  /* Sidebar slides in when open */
+  .sidebar.mobile-open{transform:translateX(0);box-shadow:var(--shadow-lg);}
+
+  /* Topbar tweaks */
+  .topbar{padding:0 12px;gap:8px;}
+  .topbar-clock{display:none;}
+  .topbar-status{display:none;}
+
+  /* Login card fluid */
+  .login-card{width:calc(100% - 2rem);padding:1.8rem 1.4rem;}
+
+  /* Tax & UTM grids collapse */
+  .tax-header-area{grid-template-columns:1fr;}
+  .utm-grid{grid-template-columns:1fr;}
+
+  /* Smaller search input */
+  .search-input{min-width:120px;flex:1;}
+
+  /* Analytics KPI 2-col */
+  .analytics-kpi{grid-template-columns:repeat(2,1fr);}
+
+  /* Modal full-friendly */
+  .modal{max-height:95vh;}
+
+  /* Page header stacks */
+  .page-header{flex-direction:column;align-items:flex-start;}
+}
+
+@media(max-width:480px){
+  /* 2-col dept grid on very small phones */
+  .dept-grid{grid-template-columns:repeat(2,1fr);}
+
+  /* Analytics KPI single col */
+  .analytics-kpi{grid-template-columns:1fr;}
+
+  /* Stats grid 2-col */
+  .stats-grid{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));}
+
+  /* Login card full bleed */
+  .login-card{padding:1.4rem 1rem;}
+
+  /* Topbar breadcrumb truncate */
+  .topbar-crumb-current{max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+}
 </style>
 </head>
 <body>
@@ -870,7 +941,11 @@ tbody tr:last-child td{border-bottom:none;}
 
   <!-- MAIN -->
   <main class="main">
+    <!-- Mobile sidebar overlay -->
+    <div class="mob-sidebar-overlay" id="mob-sidebar-overlay" onclick="closeMobileSidebar()"></div>
+
     <div class="topbar">
+      <button class="mob-hamburger" onclick="toggleMobileSidebar()" aria-label="Toggle menu">☰</button>
       <div class="topbar-breadcrumb">
         <span class="topbar-crumb">CoverCredit</span>
         <span class="topbar-crumb-sep">›</span>
@@ -2131,6 +2206,27 @@ function fmtDateShort(iso){if(!iso)return'—';return new Date(iso).toLocaleDate
 function esc(str){return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function debounce(fn,ms){let t;return(...args)=>{clearTimeout(t);t=setTimeout(()=>fn(...args),ms);};}
 function showToast(msg,type=''){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show '+type;setTimeout(()=>t.classList.remove('show'),3200);}
+
+// ════════════════════════════════════════
+// MOBILE SIDEBAR TOGGLE
+// ════════════════════════════════════════
+function toggleMobileSidebar(){
+  const sidebar=document.querySelector('.sidebar');
+  const overlay=document.getElementById('mob-sidebar-overlay');
+  sidebar.classList.toggle('mobile-open');
+  overlay.classList.toggle('show');
+}
+function closeMobileSidebar(){
+  const sidebar=document.querySelector('.sidebar');
+  const overlay=document.getElementById('mob-sidebar-overlay');
+  sidebar.classList.remove('mobile-open');
+  overlay.classList.remove('show');
+}
+document.addEventListener('DOMContentLoaded',function(){
+  document.querySelectorAll('.nav-item').forEach(function(btn){
+    btn.addEventListener('click',function(){if(window.innerWidth<=768)closeMobileSidebar();});
+  });
+});
 </script>
 </body>
 </html>
