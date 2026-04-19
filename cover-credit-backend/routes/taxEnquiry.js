@@ -8,7 +8,9 @@ const express     = require('express');
 const router      = express.Router();
 const TaxEnquiry  = require('../models/TaxEnquiry');
 const { sendTaxEnquiryAlert, sendUserConfirmation } = require('../utils/email');
-const { notifyNewTaxEnquiry, sendUserTaxConfirmation } = require('../utils/whatsapp');
+// WhatsApp not yet configured — stub until utils/whatsapp is ready
+const notifyNewTaxEnquiry    = () => Promise.resolve();
+const sendUserTaxConfirmation = () => Promise.resolve();
 
 // ── POST /api/tax-enquiry ─────────────────────────────────
 router.post('/', async (req, res) => {
@@ -57,9 +59,10 @@ router.post('/', async (req, res) => {
       topic: finalService,   // email/WA util uses 'topic'
     };
     sendTaxEnquiryAlert(notifyData).catch(err => console.error('Tax enquiry email error:', err));
+    // WhatsApp admin notify — stubbed until utils/whatsapp is ready
     notifyNewTaxEnquiry(notifyData).catch(err => console.error('Tax enquiry admin WA error:', err));
 
-    // WhatsApp confirmation to user
+    // WhatsApp confirmation to user — stubbed until utils/whatsapp is ready
     if (enquiry.phone) {
       sendUserTaxConfirmation(
         enquiry.phone,
