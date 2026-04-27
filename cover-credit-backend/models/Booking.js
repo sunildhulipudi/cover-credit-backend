@@ -2,7 +2,8 @@
 // MODEL: Booking
 // Stores data from the Book Consultation page (wizard form)
 // Updated to match new 4-step department-based form
-// + Sub-agent system fields added (agentId, teamLeaderId, leadSource, noteLog)
+// + Sub-agent fields added at the bottom (all optional/defaulted,
+//   so every existing booking in MongoDB is completely unaffected)
 // ============================================================
 const mongoose = require('mongoose');
 
@@ -74,9 +75,9 @@ const bookingSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: [
-        // ── Original statuses (kept exactly) ──
+        // Original statuses — kept exactly
         'new', 'confirmed', 'completed', 'cancelled', 'no-show',
-        // ── Added for sub-agent CRM workflow ──
+        // Added for agent CRM workflow
         'contacted', 'qualified', 'proposal', 'converted',
         'notInterested', 'followUp',
         'noAnswer1', 'noAnswer2', 'noAnswer3',
@@ -91,8 +92,8 @@ const bookingSchema = new mongoose.Schema(
     ipAddress:    { type: String, default: '' },
 
     // ── Call notes log ─────────────────────────────────────
-    // Each entry is added when admin saves a note after a call.
-    // Text + timestamp are stored permanently — never overwritten.
+    // Each entry added when admin saves a note after a call.
+    // Text + timestamp stored permanently — never overwritten.
     callNotes: {
       type: [
         {
@@ -114,14 +115,14 @@ const bookingSchema = new mongoose.Schema(
     },
 
     // ══════════════════════════════════════════════════════
-    // SUB-AGENT SYSTEM FIELDS
-    // All optional — default null so existing website bookings
-    // are completely unaffected. No migration needed.
+    // SUB-AGENT FIELDS — all optional, all defaulted to null/[]
+    // Every existing booking in MongoDB is completely unaffected.
+    // null agentId = website lead (owned by owner, same as before).
     // ══════════════════════════════════════════════════════
 
     // Which agent entered this lead manually?
-    // null  → came from covercredit.in website form (owner's lead)
-    // ObjectId → agent entered it in their dashboard
+    // null  → came from covercredit.in website form
+    // ObjectId → agent typed it in their dashboard
     agentId: {
       type:    mongoose.Schema.Types.ObjectId,
       ref:     'User',
@@ -129,8 +130,7 @@ const bookingSchema = new mongoose.Schema(
       index:   true,
     },
 
-    // Denormalised team leader ID for fast owner queries.
-    // Avoids a join — lets owner filter "all leads from Team A" in one query.
+    // Denormalised leader ID — lets owner filter "all leads from Team A" in one query.
     teamLeaderId: {
       type:    mongoose.Schema.Types.ObjectId,
       ref:     'User',
@@ -138,24 +138,22 @@ const bookingSchema = new mongoose.Schema(
       index:   true,
     },
 
-    // Where did this lead originally come from?
-    // 'website'  → visitor booked via covercredit.in (default, same as before)
+    // How did this lead arrive?
+    // 'website'  → visitor booked via covercredit.in (default — same as before)
     // 'agent'    → agent entered manually in their dashboard
     // 'whatsapp' → agent entered from a WhatsApp conversation
-    // 'referral' → someone referred this client to the agent
-    // 'walkIn'   → agent met them in person / offline
-    // 'other'    → anything else
+    // 'referral' → referral
+    // 'walkIn'   → met in person / offline
     leadSource: {
       type:    String,
       enum:    ['website', 'agent', 'whatsapp', 'referral', 'walkIn', 'other'],
       default: 'website',
     },
 
-    // Append-only note log for agent dashboard.
-    // Each agent note is stored with who added it and when.
-    // callNotes (above) = owner/admin notes from existing system
-    // noteLog           = agent notes from sub-agent dashboard
-    // Both coexist — admin sees both in the full booking detail.
+    // Append-only note log for the agent dashboard.
+    // callNotes (above) = owner/admin notes from the existing system.
+    // noteLog           = agent notes from the agent dashboard.
+    // Both coexist — admin sees both in full booking detail.
     noteLog: {
       type: [
         {
@@ -177,11 +175,7 @@ bookingSchema.index({ createdAt: -1 });
 bookingSchema.index({ status: 1 });
 bookingSchema.index({ department: 1 });
 bookingSchema.index({ phone: 1 });
-
-// Fast lookup for reminder cron — only non-null, unsent, due reminders
 bookingSchema.index({ 'reminder.sent': 1, 'reminder.scheduledAt': 1 });
-
-// Sub-agent queries — agent sees own leads, leader sees team, owner sees all
 bookingSchema.index({ agentId: 1, createdAt: -1 });
 bookingSchema.index({ teamLeaderId: 1, createdAt: -1 });
 
