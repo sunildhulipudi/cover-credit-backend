@@ -1,6 +1,7 @@
 // ============================================================
 // UTIL: Email Alerts via Brevo HTTP API
 // Updated for new department-based booking form
+// + sendWelcomeAgentEmail added for sub-agent system
 // ============================================================
 
 const https = require('https');
@@ -17,35 +18,26 @@ const DEPT_META = {
 
 // ── Field labels for dept-specific details ────────────────
 const DETAIL_LABELS = {
-  // LOAN
   loanType:       'Loan Type',
   loanAmount:     'Loan Amount',
   employmentType: 'Employment Type',
   monthlyIncome:  'Monthly Income',
   existingLoans:  'Existing Loans',
-
-  // HEALTH
   coverage:       'Coverage For',
   sumInsured:     'Sum Insured',
   existingPolicy: 'Existing Policy',
   preExisting:    'Pre-existing Conditions',
-
-  // LIFE
   ageGroup:       'Age Group',
   smoker:         'Smoker',
   planType:       'Plan Type',
   coverageAmount: 'Coverage Amount',
   dependants:     'Dependants',
-
-  // BIKE / CAR
   regNumber:      'Registration Number',
   makeModel:      'Make & Model',
   year:           'Year of Manufacture',
   currentInsurer: 'Current / Expiring Insurer',
   coverageType:   'Coverage Type',
   addOns:         'Add-ons Interested In',
-
-  // COMMERCIAL
   vehicleType:       'Vehicle Type',
   numberOfVehicles:  'Number of Vehicles',
   goodsCarrierType:  'Goods Carrier Type',
@@ -125,13 +117,11 @@ function buildBookingAlertHTML(data) {
     <table width="620" cellpadding="0" cellspacing="0"
            style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
 
-      <!-- Header -->
       <tr><td style="background:linear-gradient(135deg,#1a3c5e,#0f2440);padding:24px 32px;">
         <p style="margin:0;font-size:22px;font-weight:700;color:#fff;">Cover<span style="color:#f5a623;">Credit</span></p>
         <p style="margin:4px 0 0;font-size:13px;color:rgba(255,255,255,0.55);">Insurance Advisors — AP & Telangana</p>
       </td></tr>
 
-      <!-- Department badge -->
       <tr><td style="background:#e8622a;padding:12px 32px;">
         <p style="margin:0;font-size:16px;font-weight:700;color:#fff;">
           📅 New Booking — ${dept.icon} ${dept.label}
@@ -139,8 +129,6 @@ function buildBookingAlertHTML(data) {
       </td></tr>
 
       <tr><td style="padding:24px 32px 8px;">
-
-        <!-- Section: Contact details -->
         <p style="margin:0 0 10px;font-size:11px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:1.5px;">Contact Details</p>
         <table width="100%" cellpadding="0" cellspacing="0"
                style="border:1px solid #e5e0d8;border-radius:8px;overflow:hidden;margin-bottom:20px;">
@@ -150,7 +138,6 @@ function buildBookingAlertHTML(data) {
           ${row('City / Location', data.city)}
         </table>
 
-        <!-- Section: Department specifics -->
         ${details ? `
         <p style="margin:0 0 10px;font-size:11px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:1.5px;">${dept.label} — Specifics</p>
         <table width="100%" cellpadding="0" cellspacing="0"
@@ -159,7 +146,6 @@ function buildBookingAlertHTML(data) {
         </table>
         ` : ''}
 
-        <!-- Section: Schedule -->
         <p style="margin:0 0 10px;font-size:11px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:1.5px;">Contact Preference</p>
         <table width="100%" cellpadding="0" cellspacing="0"
                style="border:1px solid #e5e0d8;border-radius:8px;overflow:hidden;margin-bottom:20px;">
@@ -178,7 +164,6 @@ function buildBookingAlertHTML(data) {
 
       </td></tr>
 
-      <!-- Footer timestamp -->
       <tr><td style="padding:16px 32px 28px;">
         <p style="margin:0;font-size:12px;color:#aaa;">
           Received at <strong>${ist}</strong> IST &nbsp;·&nbsp;
@@ -193,7 +178,7 @@ function buildBookingAlertHTML(data) {
 </html>`;
 }
 
-// ── Contact form HTML (unchanged structure, labels updated) ─
+// ── Contact form HTML ─────────────────────────────────────
 function buildContactAlertHTML(data) {
   const rows = Object.entries(data)
     .filter(([key]) => !['_id', '__v', 'ipAddress', 'adminNotes', 'source'].includes(key))
@@ -271,6 +256,62 @@ function buildUserConfirmationHTML(name, department) {
       <p style="color:#999;font-size:12px;margin:20px 0 0;">— The Cover Credit Team</p>
     </div>
   </div>`;
+}
+
+// ── Tax Enquiry HTML ──────────────────────────────────────
+function buildTaxEnquiryAlertHTML(data) {
+  const ist = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"/></head>
+<body style="margin:0;padding:0;background:#f0ede8;font-family:Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0">
+  <tr><td align="center" style="padding:30px 16px;">
+    <table width="620" cellpadding="0" cellspacing="0"
+           style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+
+      <tr><td style="background:linear-gradient(135deg,#1a3c5e,#0f2440);padding:24px 32px;">
+        <p style="margin:0;font-size:22px;font-weight:700;color:#fff;">Cover<span style="color:#f5a623;">Credit</span></p>
+        <p style="margin:4px 0 0;font-size:13px;color:rgba(255,255,255,0.55);">Insurance Advisors — AP &amp; Telangana</p>
+      </td></tr>
+
+      <tr><td style="background:#2e7d32;padding:12px 32px;">
+        <p style="margin:0;font-size:16px;font-weight:700;color:#fff;">
+          🧾 New Tax Enquiry — ${data.service || 'General'}
+        </p>
+      </td></tr>
+
+      <tr><td style="padding:24px 32px 8px;">
+
+        <p style="margin:0 0 10px;font-size:11px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:1.5px;">Contact Details</p>
+        <table width="100%" cellpadding="0" cellspacing="0"
+               style="border:1px solid #e5e0d8;border-radius:8px;overflow:hidden;margin-bottom:20px;">
+          ${row('Full Name',     data.name,          true)}
+          ${row('Phone Number',  data.phone,         true)}
+          ${row('Email Address', data.email || '—')}
+          ${row('City',          data.city  || '—')}
+        </table>
+
+        <p style="margin:0 0 10px;font-size:11px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:1.5px;">Enquiry Details</p>
+        <table width="100%" cellpadding="0" cellspacing="0"
+               style="border:1px solid #e5e0d8;border-radius:8px;overflow:hidden;margin-bottom:20px;">
+          ${row('Service Required', data.service || '—', true)}
+          ${row('Notes / Details',  data.notes   || 'None')}
+        </table>
+
+      </td></tr>
+
+      <tr><td style="padding:16px 32px 28px;">
+        <p style="margin:0;font-size:12px;color:#aaa;">
+          Received at <strong>${ist}</strong> IST &nbsp;·&nbsp; ID: ${data._id || '—'}
+        </p>
+      </td></tr>
+
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>`;
 }
 
 // ── Public functions ──────────────────────────────────────
@@ -371,70 +412,8 @@ async function sendUserConfirmation(toEmail, name, type, department) {
   }
 }
 
-// ── Tax Enquiry HTML ──────────────────────────────────────
-function buildTaxEnquiryAlertHTML(data) {
-  const ist = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
-  return `<!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"/></head>
-<body style="margin:0;padding:0;background:#f0ede8;font-family:Arial,sans-serif;">
-<table width="100%" cellpadding="0" cellspacing="0">
-  <tr><td align="center" style="padding:30px 16px;">
-    <table width="620" cellpadding="0" cellspacing="0"
-           style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
-
-      <!-- Header -->
-      <tr><td style="background:linear-gradient(135deg,#1a3c5e,#0f2440);padding:24px 32px;">
-        <p style="margin:0;font-size:22px;font-weight:700;color:#fff;">Cover<span style="color:#f5a623;">Credit</span></p>
-        <p style="margin:4px 0 0;font-size:13px;color:rgba(255,255,255,0.55);">Insurance Advisors — AP &amp; Telangana</p>
-      </td></tr>
-
-      <!-- Badge -->
-      <tr><td style="background:#2e7d32;padding:12px 32px;">
-        <p style="margin:0;font-size:16px;font-weight:700;color:#fff;">
-          🧾 New Tax Enquiry — ${data.service || 'General'}
-        </p>
-      </td></tr>
-
-      <tr><td style="padding:24px 32px 8px;">
-
-        <!-- Contact -->
-        <p style="margin:0 0 10px;font-size:11px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:1.5px;">Contact Details</p>
-        <table width="100%" cellpadding="0" cellspacing="0"
-               style="border:1px solid #e5e0d8;border-radius:8px;overflow:hidden;margin-bottom:20px;">
-          ${row('Full Name',     data.name,          true)}
-          ${row('Phone Number',  data.phone,         true)}
-          ${row('Email Address', data.email || '—')}
-          ${row('City',          data.city  || '—')}
-        </table>
-
-        <!-- Tax Service -->
-        <p style="margin:0 0 10px;font-size:11px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:1.5px;">Enquiry Details</p>
-        <table width="100%" cellpadding="0" cellspacing="0"
-               style="border:1px solid #e5e0d8;border-radius:8px;overflow:hidden;margin-bottom:20px;">
-          ${row('Service Required', data.service || '—', true)}
-          ${row('Notes / Details',  data.notes   || 'None')}
-        </table>
-
-      </td></tr>
-
-      <!-- Footer -->
-      <tr><td style="padding:16px 32px 28px;">
-        <p style="margin:0;font-size:12px;color:#aaa;">
-          Received at <strong>${ist}</strong> IST &nbsp;·&nbsp; ID: ${data._id || '—'}
-        </p>
-      </td></tr>
-
-    </table>
-  </td></tr>
-</table>
-</body>
-</html>`;
-}
-
 async function sendTaxEnquiryAlert(data) {
   if (!process.env.BREVO_API_KEY) return;
-  // Uses TAX_EMAIL_TO — separate from booking EMAIL_TO
   const recipients = (process.env.TAX_EMAIL_TO || process.env.EMAIL_TO)
     .split(',').map(e => ({ email: e.trim() }));
   try {
@@ -449,4 +428,121 @@ async function sendTaxEnquiryAlert(data) {
   }
 }
 
-module.exports = { sendContactAlert, sendBookingAlert, sendTaxEnquiryAlert, sendUserConfirmation };
+// ══════════════════════════════════════════════════════════
+// NEW: Welcome email for newly created sub-agents
+// Called by routes/team.js when owner creates a new agent
+// ══════════════════════════════════════════════════════════
+async function sendWelcomeAgentEmail({ to, agentName, agentCode, tempPassword, loginUrl, createdByName }) {
+  if (!process.env.BREVO_API_KEY) return;
+
+  const htmlContent = `
+    <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;">
+      <div style="background:linear-gradient(135deg,#1a3c5e,#0f2440);padding:24px 28px;border-radius:12px 12px 0 0;">
+        <p style="margin:0;font-size:20px;font-weight:700;color:#fff;">Cover<span style="color:#f5a623;">Credit</span></p>
+        <p style="margin:4px 0 0;font-size:12px;color:rgba(255,255,255,0.5);">Agent Portal — your account is ready</p>
+      </div>
+      <div style="background:#fff;padding:28px 28px 24px;border-radius:0 0 12px 12px;border:1px solid #e5e0d8;border-top:3px solid #f5a623;">
+        <p style="font-size:16px;color:#1a3c5e;margin:0 0 8px;">Hi <strong>${agentName}</strong>, welcome aboard! 👋</p>
+        <p style="color:#555;line-height:1.7;margin:0 0 16px;">
+          <strong>${createdByName || 'The CoverCredit admin'}</strong> has created your agent account.
+          You can now log in to enter and manage your leads.
+        </p>
+
+        <div style="background:#f8f6f1;border-radius:8px;padding:18px 20px;margin-bottom:20px;">
+          <p style="margin:0 0 12px;font-size:11px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:1px;">Your Login Details</p>
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="padding:5px 0;font-size:13px;color:#888;width:110px;">Agent code</td>
+              <td style="padding:5px 0;font-size:13px;color:#1a3c5e;font-weight:700;">${agentCode}</td>
+            </tr>
+            <tr>
+              <td style="padding:5px 0;font-size:13px;color:#888;">Email</td>
+              <td style="padding:5px 0;font-size:13px;color:#333;">${to}</td>
+            </tr>
+            <tr>
+              <td style="padding:5px 0;font-size:13px;color:#888;">Password</td>
+              <td style="padding:5px 0;font-size:13px;color:#333;font-family:monospace;font-size:14px;">${tempPassword}</td>
+            </tr>
+          </table>
+        </div>
+
+        <div style="background:#fff8f0;border-left:3px solid #e8622a;border-radius:0 6px 6px 0;padding:10px 14px;margin-bottom:20px;">
+          <p style="margin:0;font-size:13px;color:#c94f00;font-weight:700;">
+            ⚠ Change your password on first login
+          </p>
+        </div>
+
+        <a href="${loginUrl}"
+           style="display:inline-block;background:#f5a623;color:#1a3c5e;font-weight:700;font-size:14px;
+                  padding:12px 28px;border-radius:8px;text-decoration:none;margin-bottom:20px;">
+          Log in to my dashboard →
+        </a>
+
+        <p style="color:#999;font-size:12px;margin:16px 0 0;border-top:1px solid #eee;padding-top:16px;">
+          Cover Credit · +91 78428 54466 · covercredit.in<br/>
+          Keep your credentials private. Do not share your password.
+        </p>
+      </div>
+    </div>`;
+
+  try {
+    await brevoRequest({
+      sender:      { name: 'Cover Credit', email: process.env.EMAIL_FROM || 'leads@covercredit.in' },
+      to:          [{ email: to, name: agentName }],
+      subject:     `Welcome to Cover Credit — Your Agent Login (${agentCode})`,
+      htmlContent,
+    });
+    console.log(`📧  Welcome email sent to agent: ${to}`);
+  } catch (err) {
+    console.error('Welcome agent email error:', err.message);
+    // Don't throw — agent is still created even if email fails
+  }
+}
+
+// ── Reminder email (unchanged) ────────────────────────────
+async function sendReminderEmail(booking, type = 'due') {
+  if (!process.env.BREVO_API_KEY) return;
+  const ist = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+  const dept = DEPT_META[booking.department] || { label: booking.department, icon: '📋' };
+
+  const subject = type === 'due'
+    ? `⏰ Reminder Due: Call ${booking.name} — ${dept.label}`
+    : `✅ Reminder Set: ${booking.name} — ${new Date(booking.reminder.scheduledAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}`;
+
+  const htmlContent = `
+    <div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;">
+      <div style="background:${type === 'due' ? '#9b59f7' : '#1a3c5e'};padding:20px 24px;border-radius:10px 10px 0 0;">
+        <p style="margin:0;font-size:18px;font-weight:700;color:#fff;">
+          ${type === 'due' ? '⏰ Time to follow up!' : '✅ Reminder confirmed'}
+        </p>
+      </div>
+      <div style="background:#fff;padding:24px;border-radius:0 0 10px 10px;border:1px solid #e5e0d8;border-top:none;">
+        <p style="color:#555;margin:0 0 12px;"><strong>Client:</strong> ${booking.name}</p>
+        <p style="color:#555;margin:0 0 12px;"><strong>Phone:</strong> ${booking.phone}</p>
+        <p style="color:#555;margin:0 0 12px;"><strong>Department:</strong> ${dept.icon} ${dept.label}</p>
+        <p style="color:#555;margin:0 0 12px;"><strong>City:</strong> ${booking.city || '—'}</p>
+        ${booking.reminder?.note ? `<p style="color:#555;margin:0 0 12px;"><strong>Note:</strong> ${booking.reminder.note}</p>` : ''}
+        <p style="color:#999;font-size:12px;margin-top:20px;">${ist} IST</p>
+      </div>
+    </div>`;
+
+  try {
+    await brevoRequest({
+      sender:      { name: 'Cover Credit Reminders', email: process.env.EMAIL_FROM || 'leads@covercredit.in' },
+      to:          process.env.EMAIL_TO.split(',').map(e => ({ email: e.trim() })),
+      subject,
+      htmlContent,
+    });
+  } catch (err) {
+    console.error('Reminder email error:', err.message);
+  }
+}
+
+module.exports = {
+  sendContactAlert,
+  sendBookingAlert,
+  sendTaxEnquiryAlert,
+  sendUserConfirmation,
+  sendReminderEmail,
+  sendWelcomeAgentEmail,   // ← NEW export
+};
