@@ -1,19 +1,23 @@
 // ============================================================
 // ROUTE: /api/auth
-// Handles login for ALL user types:
-//   Owner  → validated against ADMIN_EMAIL / ADMIN_PASSWORD env vars (unchanged)
-//   Leader → validated against User model in MongoDB
-//   Agent  → validated against User model in MongoDB
+// Handles login for ALL roles from one endpoint.
 //
-// Single /login endpoint — frontend redirects based on role returned
+// Owner login  → matches ADMIN_EMAIL / ADMIN_PASSWORD env vars
+//                returns role: 'owner', redirects to /admin
+//
+// Agent/Leader → looks up in User collection
+//                returns role: 'agent' or 'leader',
+//                redirects to /agent-dashboard.html
+//
+// Existing /api/auth/verify is kept exactly as-is.
 // ============================================================
-
 const express    = require('express');
 const jwt        = require('jsonwebtoken');
-const router     = express.Router();
 const rateLimit  = require('express-rate-limit');
+const router     = express.Router();
+const existingAuth = require('../middleware/auth'); // existing owner middleware — unchanged
 
-// Strict limiter: max 10 login attempts per hour
+// Strict limiter: 10 attempts per hour
 const loginLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 10,
@@ -24,20 +28,20 @@ const loginLimiter = rateLimit({
 router.post('/login', loginLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
+
     if (!email || !password) {
       return res.status(400).json({ success: false, message: 'Email and password required.' });
     }
 
     const emailLower = email.trim().toLowerCase();
 
-    // ── Step 1: Check if this is the owner (env vars) ─────
-    // This is your existing auth — completely unchanged.
-    const isOwnerEmail    = emailLower === process.env.ADMIN_EMAIL?.toLowerCase();
-    const isOwnerPassword = password   === process.env.ADMIN_PASSWORD;
+    // ── 1. Check if this is the owner ────────────────────
+    const isOwnerEmail = emailLower === process.env.ADMIN_EMAIL?.toLowerCase();
+    const isOwnerPass  = password === process.env.ADMIN_PASSWORD;
 
-    if (isOwnerEmail && isOwnerPassword) {
+    if (isOwnerEmail && isOwnerPass) {
       const token = jwt.sign(
-        { email: process.env.ADMIN_EMAIL, role: 'owner' },
+        { email: process.env.ADMIN_EMAIL, role: 'admin' },
         process.env.JWT_SECRET,
         { expiresIn: '8h' }
       );
@@ -47,58 +51,53 @@ router.post('/login', loginLimiter, async (req, res) => {
         token,
         role:       'owner',
         expiresIn:  '8h',
-        redirectTo: '/admin',       // owner goes to existing admin panel
+        redirectTo: '/admin',
       });
     }
 
-    // ── Step 2: Check if this is an agent or leader ───────
-    // Only runs if owner login didn't match.
+    // ── 2. Check agent / leader in database ──────────────
     let User;
     try {
       User = require('../models/User');
-    } catch {
-      // User model doesn't exist yet — agent system not set up
+    } catch (e) {
+      // User model not yet created — only owner login is available
       return res.status(401).json({ success: false, message: 'Invalid credentials.' });
     }
 
     const user = await User.findOne({ email: emailLower });
 
     if (!user) {
-      return res.status(401).json({ success: false, message: 'Invalid email or password.' });
+      return res.status(401).json({ success: false, message: 'Invalid credentials.' });
     }
-
     if (!user.active) {
-      return res.status(403).json({
-        success: false,
-        message: 'Your account has been deactivated. Contact your admin.',
-      });
+      return res.status(403).json({ success: false, message: 'Account deactivated. Contact your admin.' });
     }
 
-    const passwordMatch = await user.comparePassword(password);
-    if (!passwordMatch) {
-      return res.status(401).json({ success: false, message: 'Invalid email or password.' });
+    const match = await user.comparePassword(password);
+    if (!match) {
+      return res.status(401).json({ success: false, message: 'Invalid credentials.' });
     }
 
-    // Update last login time
+    // Update last login
     user.lastLoginAt = new Date();
     await user.save();
 
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
-      { expiresIn: '24h' }
+      { expiresIn: '12h' }
     );
 
     return res.json({
-      success:     true,
-      message:     'Login successful',
+      success:    true,
+      message:    'Login successful',
       token,
-      role:        user.role,
-      name:        user.name,
-      agentCode:   user.agentCode,
+      role:       user.role,
+      name:       user.name,
+      agentCode:  user.agentCode,
       mustResetPw: user.mustResetPw,
-      expiresIn:   '24h',
-      redirectTo:  '/agent-dashboard.html',  // agents go to their dashboard
+      expiresIn:  '12h',
+      redirectTo: '/agent-dashboard.html',
     });
 
   } catch (err) {
@@ -108,74 +107,75 @@ router.post('/login', loginLimiter, async (req, res) => {
 });
 
 // ── GET /api/auth/verify ──────────────────────────────────
-// Checks if token is still valid — used by admin panel on load
-// Works for both owner token (from env) and agent token (from User model)
-router.get('/verify', require('../middleware/auth'), (req, res) => {
+// Kept exactly as original — verifies owner token for admin panel
+router.get('/verify', existingAuth, (req, res) => {
   res.json({ success: true, message: 'Token valid', admin: req.admin });
 });
 
-// ── GET /api/auth/me ──────────────────────────────────────
-// Returns the logged-in agent's profile (agents/leaders only)
-router.get('/me', async (req, res) => {
+// ── POST /api/auth/agent/change-password ─────────────────
+// Agents change their password (separate from admin)
+router.post('/agent/change-password', async (req, res) => {
   try {
     const header = req.headers.authorization || '';
     const token  = header.startsWith('Bearer ') ? header.slice(7) : null;
-    if (!token) return res.status(401).json({ error: 'No token' });
+    if (!token) return res.status(401).json({ success: false, message: 'Not authenticated.' });
 
-    const decoded = require('jsonwebtoken').verify(token, process.env.JWT_SECRET);
-
-    // Owner token has no 'id' field — only email and role
-    if (decoded.role === 'owner') {
-      return res.json({ role: 'owner', email: decoded.email });
-    }
-
-    const User = require('../models/User');
-    const user = await User.findById(decoded.id).select('-password');
-    if (!user) return res.status(404).json({ error: 'User not found' });
-
-    res.json(user.toPublic());
-  } catch {
-    res.status(401).json({ error: 'Invalid token' });
-  }
-});
-
-// ── POST /api/auth/change-password ───────────────────────
-// For agents/leaders to change their password after first login
-router.post('/change-password', async (req, res) => {
-  try {
-    const header = req.headers.authorization || '';
-    const token  = header.startsWith('Bearer ') ? header.slice(7) : null;
-    if (!token) return res.status(401).json({ error: 'No token' });
-
-    const decoded = require('jsonwebtoken').verify(token, process.env.JWT_SECRET);
-    if (decoded.role === 'owner') {
-      return res.status(400).json({
-        error: 'Owner password is managed via environment variables.',
-      });
-    }
-
-    const { currentPassword, newPassword } = req.body;
-    if (!currentPassword || !newPassword) {
-      return res.status(400).json({ error: 'Both fields required' });
-    }
-    if (newPassword.length < 8) {
-      return res.status(400).json({ error: 'Password must be at least 8 characters' });
+    const jwt2 = require('jsonwebtoken');
+    const decoded = jwt2.verify(token, process.env.JWT_SECRET);
+    if (decoded.role === 'admin') {
+      return res.status(403).json({ success: false, message: 'Use admin settings instead.' });
     }
 
     const User = require('../models/User');
     const user = await User.findById(decoded.id);
-    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (!user) return res.status(404).json({ success: false, message: 'User not found.' });
+
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ success: false, message: 'Both fields required.' });
+    }
+    if (newPassword.length < 8) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 8 characters.' });
+    }
 
     const match = await user.comparePassword(currentPassword);
-    if (!match) return res.status(401).json({ error: 'Current password is incorrect' });
+    if (!match) {
+      return res.status(401).json({ success: false, message: 'Current password is incorrect.' });
+    }
 
     user.password    = newPassword;
     user.mustResetPw = false;
     await user.save();
 
-    res.json({ success: true, message: 'Password changed successfully' });
-  } catch {
-    res.status(500).json({ error: 'Failed to change password' });
+    res.json({ success: true, message: 'Password changed successfully.' });
+  } catch (err) {
+    console.error('Change password error:', err);
+    res.status(500).json({ success: false, message: 'Server error.' });
+  }
+});
+
+// ── GET /api/auth/me ──────────────────────────────────────
+// Returns current agent profile (for auto-login on page load)
+router.get('/me', async (req, res) => {
+  try {
+    const header = req.headers.authorization || '';
+    const token  = header.startsWith('Bearer ') ? header.slice(7) : null;
+    if (!token) return res.status(401).json({ success: false, message: 'Not authenticated.' });
+
+    const decoded = require('jsonwebtoken').verify(token, process.env.JWT_SECRET);
+    if (decoded.role === 'admin') {
+      return res.json({ success: true, role: 'owner', name: 'Admin' });
+    }
+
+    const User = require('../models/User');
+    const user = await User.findById(decoded.id).select('-password');
+    if (!user || !user.active) {
+      return res.status(401).json({ success: false, message: 'Account not found.' });
+    }
+
+    res.json({ success: true, ...user.toPublic() });
+  } catch (err) {
+    res.status(401).json({ success: false, message: 'Invalid token.' });
   }
 });
 
