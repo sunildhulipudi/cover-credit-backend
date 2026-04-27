@@ -2,6 +2,7 @@
 // ROUTE: /api/book
 // Handles consultation booking form submissions
 // Updated for new 4-step department-based wizard form
+// + leadSource: 'website' stamped on all website bookings
 // ============================================================
 const express = require('express');
 const { body, validationResult } = require('express-validator');
@@ -95,16 +96,17 @@ router.post('/', bookingValidation, async (req, res) => {
       referredFrom:  referredFrom  || '',
       ipAddress:     req.ip,
       source:        'book-form',
+      // ── Sub-agent fields ──────────────────────────────
+      // Website bookings always have these as null/website
+      agentId:      null,           // no agent — website visitor
+      teamLeaderId: null,           // no team — website visitor
+      leadSource:   'website',      // came from covercredit.in
     });
 
     // ── Build reference number ────────────────────────────
     const reference = `CC-${new Date().getFullYear()}-${booking._id.toString().slice(-4).toUpperCase()}`;
 
     // ── Build WhatsApp pre-filled message for client ──────
-    // WHY: After booking, the success screen shows a WhatsApp button.
-    // Instead of opening a blank chat, this pre-fills a personalised
-    // confirmation message so the client immediately knows their booking
-    // details without any extra typing from our side.
     const deptLabel  = DEPT_LABEL[department] || department;
     const slot       = timeSlot || 'Morning (9 AM – 12 PM)';
     const cleanPhone = phone.replace(/\D/g, '');
@@ -123,7 +125,7 @@ router.post('/', bookingValidation, async (req, res) => {
     );
     const waUrl = `https://wa.me/${cleanPhone}?text=${waText}`;
 
-    // Fire-and-forget alerts (don't block the response)
+    // Fire-and-forget alerts
     sendBookingAlert(booking.toObject()).catch(console.error);
     notifyNewBooking(booking.toObject()).catch(console.error);
     if (email) {
@@ -135,7 +137,7 @@ router.post('/', bookingValidation, async (req, res) => {
       message:   'Booking confirmed! We will reach you shortly.',
       id:        booking._id,
       reference,
-      waUrl,     // ← Frontend uses this to open WhatsApp with pre-filled message
+      waUrl,
     });
 
   } catch (err) {
