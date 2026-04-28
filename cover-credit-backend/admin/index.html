@@ -2433,17 +2433,17 @@ async function submitCreateAgent() {
 
   const services = [...document.querySelectorAll('.ca-svc:checked')].map(function(c){return c.value;});
 
-  const r = await apiFetch('/team/agents', {
-    method: 'POST',
-    body: JSON.stringify({
-      name, email,
-      phone:  document.getElementById('ca-phone').value,
-      city:   document.getElementById('ca-city').value,
-      region: document.getElementById('ca-region').value,
-      role:   document.getElementById('ca-role').value,
-      services,
-    }),
-  });
+const r = await apiFetch('/team/agents', {
+  method: 'POST',
+  body: JSON.stringify({
+    name, email,
+    phone: document.getElementById('ca-phone').value,
+    city: document.getElementById('ca-city').value,
+    region: document.getElementById('ca-region').value,
+    role: document.getElementById('ca-role').value,
+    services,
+  }),
+});
 
   if (r && r.success) {
     showAgentMsg(msgEl,
@@ -2469,10 +2469,9 @@ async function resetAgentPw(id, name) {
 async function toggleAgentActive(id, currentlyActive, name) {
   const action = currentlyActive ? 'Deactivate' : 'Activate';
   if (!confirm(action + ' ' + name + '?')) return;
-  const r = await apiFetch('/team/agents/' + id, {
-    method: 'PATCH',
-    body: JSON.stringify({ active: !currentlyActive }),
-  });
+  const r = await apiFetch('/team/agents/' + id, 'PATCH', {
+  active: !currentlyActive
+});
   if (r && r.success) {
     showToast(name + ' ' + (currentlyActive ? 'deactivated' : 'activated') + ' ✓', 'success');
     loadTeamOverview();
