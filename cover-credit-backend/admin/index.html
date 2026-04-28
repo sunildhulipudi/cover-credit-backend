@@ -21,7 +21,6 @@
   --text3:   #4d5a7a;
   --sidebar: 240px;
 
-  /* Accent palette — vivid & harmonious */
   --blue:    #4f8ef7;
   --blue2:   #3b7cf4;
   --indigo:  #6c63ff;
@@ -35,13 +34,11 @@
   --teal:    #14cec8;
   --cyan:    #06b6d4;
 
-  /* Semantic */
   --success: #22d68a;
   --warning: #f59e0b;
   --danger:  #f44b6b;
   --info:    #4f8ef7;
 
-  /* Gradients */
   --grad-blue:   linear-gradient(135deg,#4f8ef7,#6c63ff);
   --grad-green:  linear-gradient(135deg,#22d68a,#14cec8);
   --grad-orange: linear-gradient(135deg,#f97316,#f44b6b);
@@ -806,51 +803,25 @@ tbody tr:last-child td{border-bottom:none;}
    MOBILE RESPONSIVE ADDITIONS
 ══════════════════════════════════════ */
 @media(max-width:768px){
-  /* Hamburger visible */
   .mob-hamburger{display:flex;}
-
-  /* Sidebar slides in when open */
   .sidebar.mobile-open{transform:translateX(0);box-shadow:var(--shadow-lg);}
-
-  /* Topbar tweaks */
   .topbar{padding:0 12px;gap:8px;}
   .topbar-clock{display:none;}
   .topbar-status{display:none;}
-
-  /* Login card fluid */
   .login-card{width:calc(100% - 2rem);padding:1.8rem 1.4rem;}
-
-  /* Tax & UTM grids collapse */
   .tax-header-area{grid-template-columns:1fr;}
   .utm-grid{grid-template-columns:1fr;}
-
-  /* Smaller search input */
   .search-input{min-width:120px;flex:1;}
-
-  /* Analytics KPI 2-col */
   .analytics-kpi{grid-template-columns:repeat(2,1fr);}
-
-  /* Modal full-friendly */
   .modal{max-height:95vh;}
-
-  /* Page header stacks */
   .page-header{flex-direction:column;align-items:flex-start;}
 }
 
 @media(max-width:480px){
-  /* 2-col dept grid on very small phones */
   .dept-grid{grid-template-columns:repeat(2,1fr);}
-
-  /* Analytics KPI single col */
   .analytics-kpi{grid-template-columns:1fr;}
-
-  /* Stats grid 2-col */
   .stats-grid{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));}
-
-  /* Login card full bleed */
   .login-card{padding:1.4rem 1rem;}
-
-  /* Topbar breadcrumb truncate */
   .topbar-crumb-current{max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 }
 </style>
@@ -926,6 +897,12 @@ tbody tr:last-child td{border-bottom:none;}
       <button class="nav-item" onclick="showPanel('analytics')">
         <span class="nav-item-icon">📈</span> Analytics
       </button>
+
+      <div class="nav-section-label">Team</div>
+      <button class="nav-item" onclick="showPanel('team')">
+        <span class="nav-item-icon">👥</span> Team
+        <span class="nav-badge" id="nav-team-badge" style="display:none;"></span>
+      </button>
     </nav>
     <div class="sidebar-footer">
       <div class="sidebar-user">
@@ -964,12 +941,10 @@ tbody tr:last-child td{border-bottom:none;}
 
       <!-- ══ DASHBOARD ══ -->
       <div class="panel active" id="panel-dashboard">
-        <!-- Stat cards -->
         <div class="stats-grid" id="stats-row">
           <div class="loading">Loading stats</div>
         </div>
 
-        <!-- Quick Actions -->
         <div class="quick-actions">
           <button class="qa-btn" onclick="showPanel('bookings')">
             <span class="qa-icon">📅</span>
@@ -993,11 +968,9 @@ tbody tr:last-child td{border-bottom:none;}
           </button>
         </div>
 
-        <!-- Dept tiles -->
         <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--text3);margin-bottom:10px;">Bookings by Department</div>
         <div class="dept-grid" id="dept-grid"><div class="loading">Loading</div></div>
 
-        <!-- Charts row -->
         <div class="section-row col-2" style="margin-bottom:20px;">
           <div class="card">
             <div class="card-header">
@@ -1017,7 +990,6 @@ tbody tr:last-child td{border-bottom:none;}
           </div>
         </div>
 
-        <!-- Pipeline + Activity -->
         <div class="section-row col-2-1">
           <div class="card">
             <div class="card-header">
@@ -1039,7 +1011,6 @@ tbody tr:last-child td{border-bottom:none;}
           </div>
         </div>
 
-        <!-- Recent tables -->
         <div class="section-row col-2">
           <div class="card">
             <div class="card-header">
@@ -1269,6 +1240,75 @@ tbody tr:last-child td{border-bottom:none;}
         <div class="pagination" id="tax-pagination"></div>
       </div>
 
+      <!-- ══ TEAM ══ -->
+      <div class="panel" id="panel-team">
+
+        <div class="page-header">
+          <div>
+            <div class="page-title">Team Management</div>
+            <div class="page-subtitle">Manage sub-agents and team leaders</div>
+          </div>
+          <button class="btn btn-primary" onclick="openCreateAgent()">+ Add Agent</button>
+        </div>
+
+        <!-- Overview stat cards -->
+        <div class="stats-grid" id="team-stats-row">
+          <div class="loading">Loading team stats</div>
+        </div>
+
+        <!-- Performance table -->
+        <div class="card" style="margin-bottom:20px">
+          <div class="card-header">
+            <span class="card-title">👥 Agent Performance</span>
+            <span class="card-title-badge" id="team-count-badge">0 agents</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Agent</th>
+                  <th>Code</th>
+                  <th>Role</th>
+                  <th>City</th>
+                  <th>Total leads</th>
+                  <th>This month</th>
+                  <th>Converted</th>
+                  <th>Conv. rate</th>
+                  <th>New leads</th>
+                  <th>Last activity</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="team-perf-body">
+                <tr><td colspan="12"><div class="loading">Loading</div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Agent lead drilldown (hidden until clicked) -->
+        <div class="card" id="agent-drilldown" style="display:none">
+          <div class="card-header">
+            <span class="card-title" id="drilldown-title">Agent Leads</span>
+            <button class="btn btn-ghost btn-sm" onclick="closeDrilldown()">Close ✕</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Client</th><th>Phone</th><th>City</th>
+                  <th>Department</th><th>Status</th><th>Source</th><th>Date</th>
+                </tr>
+              </thead>
+              <tbody id="drilldown-body"></tbody>
+            </table>
+          </div>
+          <div class="pagination" id="drilldown-pgn"></div>
+        </div>
+
+      </div>
+
     </div>
   </main>
 </div>
@@ -1412,6 +1452,72 @@ tbody tr:last-child td{border-bottom:none;}
   </div>
 </div>
 
+<!-- ══ CREATE AGENT MODAL ══ -->
+<div class="modal-overlay" id="create-agent-overlay" onclick="closeCreateAgent(event)">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-head">
+      <h3>Add New Agent</h3>
+      <button class="modal-close" onclick="closeCreateAgent()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group">
+          <label>Full name *</label>
+          <input type="text" id="ca-name" placeholder="e.g. Ramesh Kumar"/>
+        </div>
+        <div class="form-group">
+          <label>Email *</label>
+          <input type="email" id="ca-email" placeholder="agent@email.com"/>
+        </div>
+        <div class="form-group">
+          <label>Phone</label>
+          <input type="tel" id="ca-phone" placeholder="10-digit mobile"/>
+        </div>
+        <div class="form-group">
+          <label>City</label>
+          <input type="text" id="ca-city" placeholder="e.g. Hyderabad"/>
+        </div>
+        <div class="form-group">
+          <label>Role</label>
+          <select id="ca-role">
+            <option value="agent">Agent</option>
+            <option value="leader">Team Leader</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Region</label>
+          <input type="text" id="ca-region" placeholder="e.g. Telangana"/>
+        </div>
+      </div>
+      <div class="form-group" style="margin-top:10px">
+        <label>Services authorised</label>
+        <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:6px">
+          <label style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:400;cursor:pointer">
+            <input type="checkbox" value="health" class="ca-svc" checked> Health
+          </label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:400;cursor:pointer">
+            <input type="checkbox" value="life" class="ca-svc" checked> Life
+          </label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:400;cursor:pointer">
+            <input type="checkbox" value="vehicle" class="ca-svc" checked> Vehicle
+          </label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:400;cursor:pointer">
+            <input type="checkbox" value="loans" class="ca-svc" checked> Loans
+          </label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:400;cursor:pointer">
+            <input type="checkbox" value="tax" class="ca-svc"> Tax
+          </label>
+        </div>
+      </div>
+      <div id="ca-msg" style="margin-top:12px;padding:10px 12px;border-radius:6px;font-size:13px;display:none"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="modal-cancel" onclick="closeCreateAgent()">Cancel</button>
+      <button class="modal-save" onclick="submitCreateAgent()">Create & send login email</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1437,19 +1543,16 @@ let currentPage={bookings:1,contacts:1,blog:1,taxenquiries:1};
 let currentAnalyticsDays=30;
 let charts={};
 
-// Global record caches — populated from ANY source (dashboard, panel loads, etc.)
 window._bookingMap  = window._bookingMap  || {};
 window._contactMap  = window._contactMap  || {};
 window._taxMap      = window._taxMap      || {};
 window._blogMap     = window._blogMap     || {};
 
-// Merge helpers — always keep the freshest copy
 function cacheBookings(arr){(arr||[]).forEach(b=>{window._bookingMap[b._id]=b;});}
 function cacheContacts(arr){(arr||[]).forEach(c=>{window._contactMap[c._id]=c;});}
 function cacheTax(arr){(arr||[]).forEach(t=>{window._taxMap[t._id]=t;});}
 function cacheBlogs(arr){(arr||[]).forEach(p=>{window._blogMap[p._id]=p;});}
 
-// Chart.js global defaults
 Chart.defaults.color='#4d5a7a';
 Chart.defaults.borderColor='rgba(255,255,255,.04)';
 Chart.defaults.font.family="'JetBrains Mono', monospace";
@@ -1480,7 +1583,7 @@ async function doLogin(){
   catch{errEl.textContent='Login failed. Check credentials.';errEl.style.display='block';}
 }
 document.addEventListener('keydown',e=>{
-  if(e.key==='Escape'){closeModal();closeReminderModal();closeBlogModal();closeViewsModal();closePreview();}
+  if(e.key==='Escape'){closeModal();closeReminderModal();closeBlogModal();closeViewsModal();closePreview();closeCreateAgent();}
   if(e.key==='Enter'&&document.getElementById('login-screen').style.display!=='none') doLogin();
 });
 function doLogout(){token='';localStorage.removeItem('cc_token');document.getElementById('app').classList.remove('show');document.getElementById('login-screen').style.display='flex';}
@@ -1489,7 +1592,7 @@ function showApp(){document.getElementById('login-screen').style.display='none';
 // ════════════════════════════════════════
 // NAVIGATION
 // ════════════════════════════════════════
-const panelTitles={dashboard:'Dashboard',bookings:'Bookings',contacts:'Contacts',blog:'Blog Posts',analytics:'Analytics',taxenquiries:'Tax Enquiries'};
+const panelTitles={dashboard:'Dashboard',bookings:'Bookings',contacts:'Contacts',blog:'Blog Posts',analytics:'Analytics',taxenquiries:'Tax Enquiries',team:'Team'};
 function showPanel(name){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
@@ -1501,6 +1604,7 @@ function showPanel(name){
   if(name==='blog')loadBlog();
   if(name==='analytics')loadAnalytics(30);
   if(name==='taxenquiries'){loadTaxEnquiries();setTimeout(renderTaxChart,300);renderTaxStats();}
+  if(name==='team')loadTeamOverview();
 }
 
 // ════════════════════════════════════════
@@ -1522,7 +1626,6 @@ async function loadDashboard(){
   if(!r.success)return;
   const s=r.stats;
 
-  // Stat cards with trend indicators
   document.getElementById('stats-row').innerHTML=`
     <div class="stat-card blue" onclick="showPanel('bookings')" style="cursor:pointer;">
       <div class="stat-card-header"><div class="stat-icon blue">📅</div><span class="stat-trend flat">All time</span></div>
@@ -1549,13 +1652,11 @@ async function loadDashboard(){
       <div class="stat-sub">Click to manage</div>
     </div>`;
 
-  // Update badges
   const nb=document.getElementById('nav-booking-badge'),nc=document.getElementById('nav-contact-badge'),nt=document.getElementById('nav-tax-badge');
   if(nb){nb.textContent=s.newBookings;nb.style.display=s.newBookings>0?'':'none';}
   if(nc){nc.textContent=s.newContacts;nc.style.display=s.newContacts>0?'':'none';}
   if(nt){nt.textContent=s.newTaxEnquiries||0;nt.style.display=(s.newTaxEnquiries||0)>0?'':'none';}
 
-  // Dept tiles
   const deptData={};(r.bookingsByDepartment||[]).forEach(d=>{deptData[d._id]=d.count;});
   const maxDept=Math.max(...Object.values(deptData),1);
   const deptColors={loan:'#4f8ef7',health:'#f44b6b',life:'#9b59f7',bike:'#22d68a',car:'#f97316',commercial:'#14cec8'};
@@ -1569,7 +1670,6 @@ async function loadDashboard(){
     </div>`;
   }).join('');
 
-  // Lead trend chart (14 days — using booking data approximation)
   const trendLabels=[],trendData=[];
   for(let i=13;i>=0;i--){const d=new Date(Date.now()-i*86400000);trendLabels.push(d.toLocaleDateString('en-IN',{day:'numeric',month:'short'}));trendData.push(Math.floor(Math.random()*8)+1);}
   destroyChart('leadTrendChart');
@@ -1579,7 +1679,6 @@ async function loadDashboard(){
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{boxWidth:8,padding:14,color:'#8b9cc8',font:{size:11}}}},scales:{y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#4d5a7a',maxTicksLimit:6}},x:{grid:{display:false},ticks:{color:'#4d5a7a',maxTicksLimit:7}}}}
   });
 
-  // Dept donut
   const deptKeys=Object.keys(DEPT),deptVals=deptKeys.map(k=>deptData[k]||0);
   destroyChart('deptChart');
   charts.deptChart=new Chart(document.getElementById('deptChart').getContext('2d'),{
@@ -1588,7 +1687,6 @@ async function loadDashboard(){
     options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{position:'right',labels:{boxWidth:10,padding:12,color:'#8b9cc8',font:{size:11}}}}}
   });
 
-  // Pipeline funnel
   const bookingStatuses=[{label:'New',key:'new',color:'#f59e0b'},{label:'Confirmed',key:'confirmed',color:'#4f8ef7'},{label:'Completed',key:'completed',color:'#22d68a'},{label:'Cancelled',key:'cancelled',color:'#f44b6b'}];
   const pipelineEl=document.getElementById('pipeline-row');
   if(pipelineEl){
@@ -1602,7 +1700,6 @@ async function loadDashboard(){
     }).join('');
   }
 
-  // Status bar chart
   destroyChart('statusChart');
   charts.statusChart=new Chart(document.getElementById('statusChart').getContext('2d'),{
     type:'bar',
@@ -1610,12 +1707,9 @@ async function loadDashboard(){
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#4d5a7a',maxTicksLimit:4}},x:{grid:{display:false},ticks:{color:'#4d5a7a'}}}}
   });
 
-  // Cache records from dashboard so clicks work without re-fetching
   cacheBookings(r.recentBookings);
   cacheContacts(r.recentContacts);
-  // Activity feed
   buildActivityFeed(r.recentBookings,r.recentContacts);
-  // Recent tables
   document.getElementById('recent-bookings').innerHTML=miniBookingTable(r.recentBookings);
   document.getElementById('recent-contacts').innerHTML=miniContactTable(r.recentContacts);
 }
@@ -1738,7 +1832,6 @@ async function loadBlog(page=currentPage.blog){
     document.getElementById('bst-draft').textContent=drft;
     document.getElementById('bst-views').textContent=views.toLocaleString();
     const nb=document.getElementById('nav-blog-badge');if(nb){nb.textContent=drft;nb.style.display=drft>0?'':'none';}
-    // Update stat card
     const sc=document.querySelector('#stats-row .stat-card.violet .stat-num');if(sc)sc.textContent=all.length;
   }
   const tbody=document.getElementById('blog-body');
@@ -1922,7 +2015,6 @@ const bookingStatuses=['new','confirmed','completed','cancelled','no-show'];
 const contactStatuses=['new','contacted','converted','closed'];
 async function openEditById(type,id){
   if(!id){showToast('Invalid record ID.','error');return;}
-  // Tax goes directly to openTaxEdit
   if(type==='taxenquiry'||type==='tax'){
     let t=window._taxMap[id];
     if(!t){
@@ -1932,10 +2024,8 @@ async function openEditById(type,id){
     if(t){openTaxEdit_fromCache(t);return;}
     showToast('Record not found.','error');return;
   }
-  // 1. Check in-memory cache first (instant)
   const cached = type==='booking'? window._bookingMap[id] : window._contactMap[id];
   if(cached){openEdit(type,cached);return;}
-  // 2. Fetch directly by ID from server
   showToast('Loading…');
   try{
     const singlePath = type==='booking' ? `/admin/bookings/${id}`
@@ -1949,7 +2039,6 @@ async function openEditById(type,id){
       openEdit(type,r.data);return;
     }
   }catch{}
-  // 3. Fallback: search in paginated list
   try{
     const listPath = type==='booking' ? `/admin/bookings?page=1&limit=200&status=all`
                    : type==='contact' ? `/admin/contacts?page=1&limit=200&status=all`
@@ -2080,7 +2169,6 @@ async function loadTaxEnquiries(page){
 function openTaxEdit(id){
   const t=window._taxMap&&window._taxMap[id];
   if(!t){
-    // Try fetching directly
     (async()=>{
       showToast('Loading…');
       try{
@@ -2151,7 +2239,6 @@ async function renderTaxChart(){
   </div>
   <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border);font-family:var(--mono);font-size:11px;color:var(--text3);">Total: <span style="color:var(--text);font-weight:600;">${total}</span></div>`;
 
-  // Tax status donut chart
   const statusR=await apiFetch('/admin/tax-enquiries?limit=200');
   if(statusR.success&&statusR.data.length){
     const statusCounts={};statusR.data.forEach(t=>{statusCounts[t.status]=(statusCounts[t.status]||0)+1;});
@@ -2181,6 +2268,230 @@ async function renderTaxStats(){
 }
 
 // ════════════════════════════════════════
+// TEAM MANAGEMENT
+// ════════════════════════════════════════
+async function loadTeamOverview() {
+  document.getElementById('team-perf-body').innerHTML =
+    '<tr><td colspan="12"><div class="loading">Loading team data</div></td></tr>';
+
+  const r = await apiFetch('/team/overview');
+  if (!r || !r.success) {
+    document.getElementById('team-perf-body').innerHTML =
+      '<tr><td colspan="12" style="text-align:center;color:var(--text3);padding:24px">Failed to load. Check API.</td></tr>';
+    return;
+  }
+
+  const { agents, totals, agentCount, leaderCount } = r;
+
+  document.getElementById('team-count-badge').textContent =
+    agentCount + ' agent' + (agentCount !== 1 ? 's' : '') +
+    (leaderCount ? ', ' + leaderCount + ' leader' + (leaderCount !== 1 ? 's' : '') : '');
+
+  const convRate = totals.total > 0 ? Math.round((totals.converted / totals.total) * 100) : 0;
+  document.getElementById('team-stats-row').innerHTML =
+    '<div class="stat-card blue" style="cursor:default">' +
+      '<div class="stat-card-header"><div class="stat-icon blue">👥</div></div>' +
+      '<div class="stat-num">' + (agentCount + leaderCount) + '</div>' +
+      '<div class="stat-label">Total agents</div>' +
+      '<div class="stat-sub">' + leaderCount + ' team leader' + (leaderCount !== 1 ? 's' : '') + '</div>' +
+    '</div>' +
+    '<div class="stat-card green" style="cursor:default">' +
+      '<div class="stat-card-header"><div class="stat-icon green">📋</div></div>' +
+      '<div class="stat-num">' + totals.total + '</div>' +
+      '<div class="stat-label">All-time leads</div>' +
+      '<div class="stat-sub">' + totals.thisMonth + ' this month</div>' +
+    '</div>' +
+    '<div class="stat-card violet" style="cursor:default">' +
+      '<div class="stat-card-header"><div class="stat-icon violet">✅</div></div>' +
+      '<div class="stat-num">' + totals.converted + '</div>' +
+      '<div class="stat-label">Converted</div>' +
+      '<div class="stat-sub">' + convRate + '% team rate</div>' +
+    '</div>' +
+    '<div class="stat-card amber" style="cursor:default">' +
+      '<div class="stat-card-header"><div class="stat-icon amber">🏆</div></div>' +
+      '<div class="stat-num" style="font-size:16px;font-weight:700;">' +
+        ([...agents].sort(function(a,b){return b.stats.thisMonth - a.stats.thisMonth;})[0]?.name || '—') +
+      '</div>' +
+      '<div class="stat-label">Top agent</div>' +
+      '<div class="stat-sub">most leads this month</div>' +
+    '</div>';
+
+  const totalNew = agents.reduce(function(s,a){return s + a.stats.newLeads;}, 0);
+  const nb = document.getElementById('nav-team-badge');
+  if (nb) { nb.textContent = totalNew; nb.style.display = totalNew > 0 ? '' : 'none'; }
+
+  if (!agents.length) {
+    document.getElementById('team-perf-body').innerHTML =
+      '<tr><td colspan="12" style="text-align:center;color:var(--text3);padding:28px">No agents yet. Add your first agent above.</td></tr>';
+    return;
+  }
+
+  const sorted = [...agents].sort(function(a,b){return b.stats.total - a.stats.total;});
+  document.getElementById('team-perf-body').innerHTML = sorted.map(function(a) {
+    const cr = a.stats.conversionRate;
+    const crColor = cr >= 20 ? 'var(--green)' : cr >= 10 ? 'var(--amber)' : 'var(--rose)';
+    const lastAct = a.stats.lastLeadAt
+      ? new Date(a.stats.lastLeadAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
+      : 'Never';
+    return '<tr>' +
+      '<td class="td-name">' + esc(a.name) + '</td>' +
+      '<td style="font-family:var(--mono);font-size:11px;color:var(--cyan)">' + (a.agentCode || '—') + '</td>' +
+      '<td><span class="badge badge-' + (a.role === 'leader' ? 'confirmed' : 'new') + '">' + a.role + '</span></td>' +
+      '<td class="td-muted">' + esc(a.city || '—') + '</td>' +
+      '<td style="font-weight:700">' + a.stats.total + '</td>' +
+      '<td style="color:var(--amber);font-weight:600">' + a.stats.thisMonth + '</td>' +
+      '<td style="color:var(--green)">' + a.stats.converted + '</td>' +
+      '<td>' +
+        '<div style="display:flex;align-items:center;gap:6px">' +
+          '<span style="color:' + crColor + ';font-weight:600">' + cr + '%</span>' +
+          '<div style="width:50px;height:4px;background:var(--bg3);border-radius:100px;overflow:hidden">' +
+            '<div style="height:100%;width:' + Math.min(cr,100) + '%;background:' + crColor + ';border-radius:100px"></div>' +
+          '</div>' +
+        '</div>' +
+      '</td>' +
+      '<td style="color:' + (a.stats.newLeads > 0 ? 'var(--rose)' : 'var(--text3)') + ';font-weight:' + (a.stats.newLeads > 0 ? '600' : '400') + '">' + a.stats.newLeads + '</td>' +
+      '<td class="td-date">' + lastAct + '</td>' +
+      '<td><span class="badge badge-' + (a.active ? 'converted' : 'cancelled') + '">' + (a.active ? 'Active' : 'Inactive') + '</span></td>' +
+      '<td>' +
+        '<div class="actions">' +
+          '<button class="act-btn act-edit" onclick="viewAgentLeads(\'' + a._id + '\',\'' + esc(a.name) + '\')">Leads</button>' +
+          '<button class="act-btn act-wa" onclick="resetAgentPw(\'' + a._id + '\',\'' + esc(a.name) + '\')">Reset PW</button>' +
+          '<button class="act-btn act-delete" onclick="toggleAgentActive(\'' + a._id + '\',' + a.active + ',\'' + esc(a.name) + '\')">' + (a.active ? 'Deactivate' : 'Activate') + '</button>' +
+        '</div>' +
+      '</td>' +
+    '</tr>';
+  }).join('');
+}
+
+async function viewAgentLeads(agentId, agentName) {
+  document.getElementById('agent-drilldown').style.display = 'block';
+  document.getElementById('drilldown-title').textContent = agentName + "'s leads";
+  document.getElementById('drilldown-body').innerHTML = '<tr><td colspan="7"><div class="loading">Loading</div></td></tr>';
+  document.getElementById('agent-drilldown').scrollIntoView({ behavior: 'smooth' });
+
+  const r = await apiFetch('/team/agents/' + agentId + '/leads?page=1&limit=20');
+  if (!r || !r.success) {
+    document.getElementById('drilldown-body').innerHTML =
+      '<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:20px">Failed to load leads.</td></tr>';
+    return;
+  }
+
+  document.getElementById('drilldown-title').textContent =
+    agentName + "'s leads (" + r.pagination.total + " total)";
+
+  if (!r.data.length) {
+    document.getElementById('drilldown-body').innerHTML =
+      '<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:20px">No leads yet for this agent.</td></tr>';
+    return;
+  }
+
+  document.getElementById('drilldown-body').innerHTML = r.data.map(function(l) {
+    return '<tr>' +
+      '<td class="td-name">' + esc(l.name) + '</td>' +
+      '<td class="td-phone">' + l.phone + '</td>' +
+      '<td class="td-muted">' + esc(l.city || '—') + '</td>' +
+      '<td><span class="dept-badge">' + (l.department || '—') + '</span></td>' +
+      '<td><span class="badge badge-' + (l.status||'new').replace(/[^a-z]/gi,'').toLowerCase() + '">' + (l.status || 'new') + '</span></td>' +
+      '<td class="td-muted" style="font-size:11px">' + (l.leadSource || 'website') + '</td>' +
+      '<td class="td-date">' + fmtDate(l.createdAt) + '</td>' +
+    '</tr>';
+  }).join('');
+
+  const p = r.pagination;
+  document.getElementById('drilldown-pgn').innerHTML =
+    p.pages > 1
+      ? '<span class="page-info">Page 1 of ' + p.pages + ' · ' + p.total + ' leads</span>'
+      : '';
+}
+
+function closeDrilldown() {
+  document.getElementById('agent-drilldown').style.display = 'none';
+}
+
+function openCreateAgent() {
+  document.getElementById('create-agent-overlay').classList.add('show');
+  document.getElementById('ca-msg').style.display = 'none';
+  ['ca-name','ca-email','ca-phone','ca-city','ca-region'].forEach(function(id) {
+    document.getElementById(id).value = '';
+  });
+}
+
+function closeCreateAgent(e) {
+  if (!e || e.target === document.getElementById('create-agent-overlay')) {
+    document.getElementById('create-agent-overlay').classList.remove('show');
+  }
+}
+
+async function submitCreateAgent() {
+  const name  = document.getElementById('ca-name').value.trim();
+  const email = document.getElementById('ca-email').value.trim();
+  const msgEl = document.getElementById('ca-msg');
+  msgEl.style.display = 'none';
+
+  if (!name)  { showAgentMsg(msgEl, 'Name is required.', 'error'); return; }
+  if (!email) { showAgentMsg(msgEl, 'Email is required.', 'error'); return; }
+
+  const services = [...document.querySelectorAll('.ca-svc:checked')].map(function(c){return c.value;});
+
+  const r = await apiFetch('/team/agents', {
+    method: 'POST',
+    body: JSON.stringify({
+      name, email,
+      phone:  document.getElementById('ca-phone').value,
+      city:   document.getElementById('ca-city').value,
+      region: document.getElementById('ca-region').value,
+      role:   document.getElementById('ca-role').value,
+      services,
+    }),
+  });
+
+  if (r && r.success) {
+    showAgentMsg(msgEl,
+      'Agent created! Login email sent to ' + email + '.\nAgent code: ' + r.data.agentCode + ' · Temp password: ' + r.tempPassword,
+      'success'
+    );
+    loadTeamOverview();
+  } else {
+    showAgentMsg(msgEl, r?.message || 'Failed to create agent.', 'error');
+  }
+}
+
+async function resetAgentPw(id, name) {
+  if (!confirm('Reset password for ' + name + '?\nThey will need to change it on next login.')) return;
+  const r = await apiFetch('/team/agents/' + id + '/reset-password', { method: 'POST' });
+  if (r && r.success) {
+    alert('Password reset for ' + name + '\n\nTemporary password: ' + r.tempPassword + '\n\nShare this with them directly.');
+  } else {
+    alert('Failed: ' + (r?.message || 'Unknown error'));
+  }
+}
+
+async function toggleAgentActive(id, currentlyActive, name) {
+  const action = currentlyActive ? 'Deactivate' : 'Activate';
+  if (!confirm(action + ' ' + name + '?')) return;
+  const r = await apiFetch('/team/agents/' + id, {
+    method: 'PATCH',
+    body: JSON.stringify({ active: !currentlyActive }),
+  });
+  if (r && r.success) {
+    showToast(name + ' ' + (currentlyActive ? 'deactivated' : 'activated') + ' ✓', 'success');
+    loadTeamOverview();
+  } else {
+    showToast('Failed.', 'error');
+  }
+}
+
+function showAgentMsg(el, msg, type) {
+  el.style.display = 'block';
+  el.style.background = type === 'success' ? 'rgba(34,214,138,.1)' : 'rgba(244,75,107,.1)';
+  el.style.color      = type === 'success' ? 'var(--green)' : 'var(--rose)';
+  el.style.border     = '1px solid ' + (type === 'success' ? 'rgba(34,214,138,.3)' : 'rgba(244,75,107,.3)');
+  el.style.borderRadius = '6px';
+  el.style.padding = '10px 12px';
+  el.textContent = msg;
+}
+
+// ════════════════════════════════════════
 // GLOBAL SEARCH
 // ════════════════════════════════════════
 function handleGlobalSearch(){
@@ -2190,6 +2501,7 @@ function handleGlobalSearch(){
   if(q.includes('tax')||q.includes('itr')||q.includes('gst')){showPanel('taxenquiries');return;}
   if(q.includes('blog')||q.includes('post')||q.includes('article')){showPanel('blog');return;}
   if(q.includes('analytic')||q.includes('traffic')){showPanel('analytics');return;}
+  if(q.includes('team')||q.includes('agent')||q.includes('leader')){showPanel('team');return;}
 }
 
 // ════════════════════════════════════════
